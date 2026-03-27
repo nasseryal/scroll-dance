@@ -1,4 +1,4 @@
-// ── Character — Kawaii K-pop, évolutif avec compression et explosion ──────────
+// ── Character — Kawaii K-pop, évolutif avec tenue progressive aléatoire ────────
 import React, { useEffect, useRef, useState } from 'react';
 import { Animated, View } from 'react-native';
 import Svg, {
@@ -6,19 +6,58 @@ import Svg, {
   RadialGradient, LinearGradient, Stop,
 } from 'react-native-svg';
 
-// ─── Palettes par stade d'évolution ──────────────────────────────────────────
-const STAGE_COLORS = [
-  // 0 — Bleu électrique (départ)
-  { body1: '#1177ff', body2: '#0044cc', legs: '#0033aa', shoes: '#00ccff', star: '#00eeff', note: '#00eeff' },
-  // 1 — Magenta (combo 10)
-  { body1: '#ff33cc', body2: '#aa0077', legs: '#880044', shoes: '#ff99dd', star: '#ffee00', note: '#ff33cc' },
-  // 2 — Or / feu (combo 30)
-  { body1: '#ffaa00', body2: '#cc5500', legs: '#884400', shoes: '#ffee44', star: '#ff3300', note: '#ffaa00' },
-  // 3 — Cyan / glace (combo 60)
-  { body1: '#00ffcc', body2: '#009977', legs: '#004433', shoes: '#aa44ff', star: '#ff33cc', note: '#00ffcc' },
-  // 4 — Violet royal (combo 90)
-  { body1: '#cc44ff', body2: '#6600bb', legs: '#330066', shoes: '#ff33cc', star: '#00eeff', note: '#cc44ff' },
+// ─── Palette néon pour les mutations de tenue ─────────────────────────────────
+const NEON_PALETTE = [
+  '#ff00ff', '#00ffff', '#ff0066', '#00ff88',
+  '#cc00ff', '#ffff00', '#ff8800', '#ff3399',
+  '#00ccff', '#aaff00',
 ];
+
+// Pièces de tenue LE DEV : 0=corps, 1=jambes, 2=chaussures, 3=étoile
+const BASE_COLORS = {
+  body1: '#1177ff', body2: '#0044cc',
+  legs: '#0033aa', shoes: '#00ccff', star: '#00eeff',
+};
+
+function shuffleArray(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function darkenHex(hex, f = 0.52) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return '#' + [r, g, b].map(v => Math.floor(v * f).toString(16).padStart(2, '0')).join('');
+}
+
+// Génère un plan de mutation une fois au montage
+function generateDevPlan() {
+  const colors = shuffleArray([...NEON_PALETTE]);
+  // 10 étapes : pièces 0-3 mélangées × 2 + 2 extras
+  const pieces = [
+    ...shuffleArray([0, 1, 2, 3]),
+    ...shuffleArray([0, 1, 2, 3]),
+    ...shuffleArray([0, 3]),
+  ];
+  return colors.map((color, i) => ({ piece: pieces[i], color }));
+}
+
+function buildColors(evolutionStage, plan) {
+  const c = { ...BASE_COLORS };
+  for (let i = 0; i < Math.min(evolutionStage, plan.length); i++) {
+    const { piece, color } = plan[i];
+    if (piece === 0) { c.body1 = color; c.body2 = darkenHex(color); }
+    else if (piece === 1) { c.legs = color; }
+    else if (piece === 2) { c.shoes = color; }
+    else if (piece === 3) { c.star = color; }
+  }
+  return c;
+}
 
 // ─── Note musicale flottante ──────────────────────────────────────────────────
 function MusicalNote({ color = '#00eeff', startX = 0 }) {
@@ -80,11 +119,11 @@ function SwipeStar({ color }) {
   );
 }
 
-// ─── SVG du personnage — couleurs variables selon le stade ───────────────────
+// ─── SVG du personnage ────────────────────────────────────────────────────────
 function CharacterSVG({ ouch = false, colors }) {
   const { body1, body2, legs, shoes, star } = colors;
   return (
-    <Svg width={120} height={165} viewBox="0 0 110 160">
+    <Svg width={130} height={162} viewBox="0 0 110 160">
       <Defs>
         <RadialGradient id="headG" cx="38%" cy="30%" r="60%">
           <Stop offset="0%"   stopColor="#ffe5b0" />
@@ -113,40 +152,22 @@ function CharacterSVG({ ouch = false, colors }) {
         </RadialGradient>
       </Defs>
 
-      {/* Ombre sol */}
       <Ellipse cx="55" cy="158" rx="22" ry="5" fill="#000" opacity={0.28} />
-
-      {/* Corps */}
       <Ellipse cx="55" cy="130" rx="24" ry="26" fill="url(#bodyG)" />
-
-      {/* Étoile tenue */}
       <Path
         d="M55 119 L57.5 126 L65 126 L59.2 130 L61 137 L55 133 L49 137 L50.8 130 L45 126 L52.5 126 Z"
         fill={star} opacity={0.9}
       />
-
-      {/* Bras gauche */}
       <Ellipse cx="28" cy="125" rx="8" ry="14" fill="url(#armG)" />
       <Circle  cx="26" cy="139" r="7" fill="#ffd08a" />
-
-      {/* Bras droit */}
       <Ellipse cx="82" cy="125" rx="8" ry="14" fill="url(#armG)" />
       <Circle  cx="84" cy="139" r="7" fill="#ffd08a" />
-
-      {/* Jambes */}
       <Ellipse cx="43" cy="153" rx="10" ry="8" fill={legs} />
       <Ellipse cx="67" cy="153" rx="10" ry="8" fill={legs} />
-      {/* Chaussures */}
       <Ellipse cx="41" cy="158" rx="11" ry="5" fill={shoes} />
       <Ellipse cx="69" cy="158" rx="11" ry="5" fill={shoes} />
-
-      {/* Tête */}
       <Circle cx="55" cy="72" r="40" fill="url(#headG)" />
-
-      {/* Cou */}
       <Rect x="47" y="107" width="16" height="12" rx="4" fill="#ffd08a" />
-
-      {/* Cheveux noirs mi-longs ondulés */}
       <Path
         d="M 18 70 C 15 42, 26 20, 55 18 C 84 20, 95 42, 92 70
            C 88 57, 81 50, 78 54 C 74 41, 70 30, 55 28
@@ -163,19 +184,11 @@ function CharacterSVG({ ouch = false, colors }) {
            C 87 112, 92 100, 88 86 C 86 78, 88 73, 90 70 Z"
         fill="url(#hairG)"
       />
-      <Path
-        d="M 36 26 C 41 22, 56 20, 67 25"
-        stroke="#555555" strokeWidth={3} fill="none" opacity={0.7}
-      />
-
-      {/* Oreille gauche */}
+      <Path d="M 36 26 C 41 22, 56 20, 67 25" stroke="#555555" strokeWidth={3} fill="none" opacity={0.7} />
       <Ellipse cx="16" cy="74" rx="6" ry="8" fill="#ffd08a" />
       <Ellipse cx="16" cy="74" rx="3.5" ry="5" fill="#e8a060" opacity={0.5} />
-      {/* Oreille droite */}
       <Ellipse cx="94" cy="74" rx="6" ry="8" fill="#ffd08a" />
       <Ellipse cx="94" cy="74" rx="3.5" ry="5" fill="#e8a060" opacity={0.5} />
-
-      {/* Œil gauche */}
       <Ellipse cx="41" cy="72" rx="10" ry="12" fill="white" />
       <Circle  cx="41" cy="73" r="7.5" fill="url(#irisG)" />
       <Circle  cx="41" cy="73" r="4"   fill="#0a0a1a" />
@@ -184,8 +197,6 @@ function CharacterSVG({ ouch = false, colors }) {
       <Path d="M 31 66 C 33 62, 49 62, 51 66" stroke="#0a0a1a" strokeWidth={2.5} fill="none" strokeLinecap="round" />
       <Path d="M 33 81 L 31 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
       <Path d="M 50 81 L 52 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
-
-      {/* Œil droit */}
       <Ellipse cx="69" cy="72" rx="10" ry="12" fill="white" />
       <Circle  cx="69" cy="73" r="7.5" fill="url(#irisG)" />
       <Circle  cx="69" cy="73" r="4"   fill="#0a0a1a" />
@@ -194,12 +205,8 @@ function CharacterSVG({ ouch = false, colors }) {
       <Path d="M 59 66 C 61 62, 77 62, 79 66" stroke="#0a0a1a" strokeWidth={2.5} fill="none" strokeLinecap="round" />
       <Path d="M 61 81 L 59 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
       <Path d="M 78 81 L 80 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
-
-      {/* Joues */}
       <Ellipse cx="28" cy="84" rx="10" ry="6" fill="url(#blushG)" />
       <Ellipse cx="82" cy="84" rx="10" ry="6" fill="url(#blushG)" />
-
-      {/* Bouche */}
       {ouch
         ? <Path d="M 46 95 Q 55 89 64 95" stroke="#cc3333" strokeWidth={2.5} fill="none" strokeLinecap="round" />
         : <Path d="M 46 91 Q 55 100 64 91" stroke="#cc4444" strokeWidth={2.5} fill="none" strokeLinecap="round" />
@@ -213,6 +220,8 @@ export default function Character({
   animLevel = 0, ouch = false, combo = 0, swipeDir = null,
   evolutionStage = 0, compressionRatio = 0,
 }) {
+  const [piecePlan] = useState(() => generateDevPlan());
+
   const ty        = useRef(new Animated.Value(0)).current;
   const rot       = useRef(new Animated.Value(0)).current;
   const sx        = useRef(new Animated.Value(1)).current;
@@ -220,9 +229,7 @@ export default function Character({
   const ouchShake = useRef(new Animated.Value(0)).current;
   const lean      = useRef(new Animated.Value(0)).current;
 
-  // Compression progressive (s'accumule avec le combo)
   const compressAnim   = useRef(new Animated.Value(0)).current;
-  // Explosion d'évolution
   const explosionScale = useRef(new Animated.Value(1)).current;
   const explosionFlash = useRef(new Animated.Value(0)).current;
   const prevStageRef   = useRef(0);
@@ -271,7 +278,6 @@ export default function Character({
         ]),
         Animated.spring(rot, { toValue: 0, useNativeDriver: true }),
       ]).start(() => startIdle());
-
     } else if (level === 2) {
       Animated.sequence([
         Animated.parallel([
@@ -286,7 +292,6 @@ export default function Character({
           Animated.spring(sy, { toValue: 1, useNativeDriver: true }),
         ]),
       ]).start(() => { rot.setValue(0); startIdle(); });
-
     } else if (level === 3) {
       Animated.sequence([
         Animated.parallel([
@@ -303,7 +308,6 @@ export default function Character({
         ]),
         Animated.spring(rot, { toValue: 0, useNativeDriver: true }),
       ]).start(() => startIdle());
-
     } else if (level === 4) {
       Animated.sequence([
         Animated.parallel([
@@ -347,16 +351,12 @@ export default function Character({
     ]).start(() => startIdle());
   }
 
-  // Compression progressive (se remet à 0 quand le combo reset)
   useEffect(() => {
     Animated.timing(compressAnim, {
-      toValue: compressionRatio,
-      duration: 150,
-      useNativeDriver: true,
+      toValue: compressionRatio, duration: 150, useNativeDriver: true,
     }).start();
   }, [compressionRatio]);
 
-  // Explosion + réapparition à chaque nouveau stade d'évolution
   useEffect(() => {
     if (evolutionStage > prevStageRef.current) {
       prevStageRef.current = evolutionStage;
@@ -375,7 +375,6 @@ export default function Character({
     }
   }, [evolutionStage]);
 
-  // Réaction au swipe
   useEffect(() => {
     if (swipeDir && !ouch) {
       const leanVal = swipeDir === 'right' ? 0.25 : swipeDir === 'left' ? -0.25 : 0;
@@ -390,7 +389,6 @@ export default function Character({
           Animated.spring(ty,   { toValue: 0, friction: 5, useNativeDriver: true }),
         ]),
       ]).start();
-
       const sid   = starId.current++;
       const color = { up: '#00eeff', down: '#ff33cc', left: '#ffaa00', right: '#33ff88' }[swipeDir] || '#fff';
       setSwipeStars(prev => [...prev, { id: sid, color }]);
@@ -399,15 +397,13 @@ export default function Character({
   }, [swipeDir]);
 
   useEffect(() => {
-    if (ouch) {
-      playOuch();
-    } else {
+    if (ouch) { playOuch(); }
+    else {
       if (animLevel === 0) startIdle();
       else playDance(animLevel);
     }
   }, [animLevel, ouch]);
 
-  // Notes musicales
   useEffect(() => {
     if (animLevel > 0 && !ouch) {
       const id = noteId.current++;
@@ -423,24 +419,18 @@ export default function Character({
   const compressY = compressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.70] });
   const compressX = compressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.22] });
 
-  const colors = STAGE_COLORS[Math.min(evolutionStage, STAGE_COLORS.length - 1)];
+  const colors = buildColors(evolutionStage, piecePlan);
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: 140, height: 190 }}>
-      {/* Étoiles swipe */}
       {swipeStars.map(s => <SwipeStar key={s.id} color={s.color} />)}
-      {/* Notes musicales colorées selon le stade */}
-      {notes.map(n => <MusicalNote key={n.id} color={colors.note} startX={n.x} />)}
+      {notes.map(n => <MusicalNote key={n.id} color={colors.body1} startX={n.x} />)}
 
-      {/* Wrapper explosion (scale global) */}
       <Animated.View style={{
         transform: [{ scale: explosionScale }],
-        alignItems: 'center', justifyContent: 'center',
-        width: 140, height: 190,
+        alignItems: 'center', justifyContent: 'center', width: 140, height: 190,
       }}>
-        {/* Wrapper compression (squash progressif) */}
         <Animated.View style={{ transform: [{ scaleX: compressX }, { scaleY: compressY }] }}>
-          {/* Wrapper danse (animations par combo) */}
           <Animated.View style={{
             transform: [
               { translateY: ty },
@@ -455,13 +445,10 @@ export default function Character({
           </Animated.View>
         </Animated.View>
 
-        {/* Flash d'évolution */}
         <Animated.View pointerEvents="none" style={{
-          position: 'absolute',
-          width: 140, height: 190,
+          position: 'absolute', width: 140, height: 190,
           backgroundColor: colors.star,
-          opacity: explosionFlash,
-          borderRadius: 80,
+          opacity: explosionFlash, borderRadius: 80,
         }} />
       </Animated.View>
     </View>

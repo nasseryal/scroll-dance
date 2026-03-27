@@ -5,6 +5,9 @@ import {
   Animated, Dimensions, StatusBar,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { savePlayerScore, getPlayerCountry } from '../utils/leaderboard';
+import { getProfile } from '../utils/profile';
+import CharacterSelector from '../components/CharacterSelector';
 
 const { width, height } = Dimensions.get('window');
 
@@ -170,22 +173,36 @@ function CyberpunkGrid() {
 }
 
 // ─── Main ────────────────────────────────────────────────────────────────────
+const MAPS = [
+  { id: 'void',  label: '◈  VIDE'  },
+  { id: 'space', label: '🌌 ESPACE' },
+  { id: 'city',  label: '🏙️ CITY'  },
+];
+
 export default function GameOverScreen({ navigation, route }) {
-  const { score = 0, combo = 0 } = route.params || {};
-  const [highScore, setHighScore] = useState(0);
+  function handleLeaderboard() { navigation.navigate('Leaderboard'); }
+  const { score = 0, combo = 0, mapIndex: initialMap = 0, charIndex: initialChar = 0 } = route.params || {};
+  const [highScore,   setHighScore]   = useState(0);
   const [isNewRecord, setIsNewRecord] = useState(false);
+  const [charIndex,   setCharIndex]   = useState(initialChar);
+  const [mapIndex,    setMapIndex]    = useState(initialMap);
 
   useEffect(() => {
+    const country = getPlayerCountry();
     AsyncStorage.getItem('highScore').then(val => {
       const hs = val ? parseInt(val, 10) : 0;
       setHighScore(Math.max(hs, score));
       setIsNewRecord(score > hs);
+      if (score > hs) AsyncStorage.setItem('highScore', String(score));
+    });
+    getProfile().then(p => {
+      savePlayerScore(score, country, p.gamertag || 'YOU');
     });
   }, []);
 
-  function handleRetry() {
-    navigation.replace('Game');
-  }
+  function handleRetry() { navigation.replace('Game', { mapIndex, charIndex }); }
+  function changeMap(dir) { setMapIndex(i => (i + dir + MAPS.length) % MAPS.length); }
+  function handleHome()  { navigation.navigate('Home'); }
 
   return (
     <View style={styles.container}>
@@ -218,9 +235,57 @@ export default function GameOverScreen({ navigation, route }) {
           <Text style={styles.highScoreText}>HIGH SCORE : {String(highScore).padStart(4, '0')}</Text>
         </BounceIn>
 
+        {/* Sélecteur de map */}
+        <BounceIn delay={750}>
+          <View style={styles.mapSelector}>
+            <TouchableOpacity onPress={() => changeMap(-1)} style={styles.mapArrow} activeOpacity={0.6}>
+              <Text style={styles.mapArrowText}>◄</Text>
+            </TouchableOpacity>
+            <View style={styles.mapLabel}>
+              <Text style={styles.mapLabelTitle}>MAP</Text>
+              <Text style={styles.mapLabelName}>{MAPS[mapIndex].label}</Text>
+              <View style={styles.mapDots}>
+                {MAPS.map((_, i) => (
+                  <View key={i} style={[styles.dot, i === mapIndex && styles.dotActive]} />
+                ))}
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => changeMap(1)} style={styles.mapArrow} activeOpacity={0.6}>
+              <Text style={styles.mapArrowText}>►</Text>
+            </TouchableOpacity>
+          </View>
+        </BounceIn>
+
+        {/* Sélecteur de personnage */}
+        <BounceIn delay={800}>
+          <CharacterSelector charIndex={charIndex} onChange={setCharIndex} />
+        </BounceIn>
+
         {/* Retry button */}
-        <BounceIn delay={900}>
+        <BounceIn delay={950}>
           <PulseButton onPress={handleRetry} />
+        </BounceIn>
+
+        {/* Home button */}
+        <BounceIn delay={1050}>
+          <TouchableOpacity
+            style={styles.homeBtn}
+            onPress={handleHome}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.homeBtnText}>⌂  MENU</Text>
+          </TouchableOpacity>
+        </BounceIn>
+
+        {/* Leaderboard button */}
+        <BounceIn delay={1200}>
+          <TouchableOpacity
+            style={styles.lbBtn}
+            onPress={handleLeaderboard}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.lbBtnText}>🏆 CLASSEMENT</Text>
+          </TouchableOpacity>
         </BounceIn>
       </View>
     </View>
@@ -306,6 +371,55 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     backgroundColor: 'transparent',
   },
+  homeBtn: {
+    marginTop: 14,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#33ff88',
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  homeBtnText: {
+    color: '#33ff88',
+    fontFamily: 'monospace',
+    fontSize: 14,
+    letterSpacing: 3,
+  },
+  lbBtn: {
+    marginTop: 14,
+    paddingHorizontal: 32,
+    paddingVertical: 12,
+    borderWidth: 1,
+    borderColor: '#aa33ff',
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  lbBtnText: {
+    color: '#aa33ff',
+    fontFamily: 'monospace',
+    fontSize: 14,
+    letterSpacing: 3,
+  },
+  mapSelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 14,
+    borderWidth: 1,
+    borderColor: '#330055',
+    borderRadius: 8,
+    paddingVertical: 6,
+    paddingHorizontal: 4,
+    backgroundColor: 'rgba(10, 0, 30, 0.55)',
+  },
+  mapArrow: { paddingHorizontal: 14, paddingVertical: 4 },
+  mapArrowText: { color: '#aa33ff', fontFamily: 'monospace', fontSize: 16 },
+  mapLabel: { alignItems: 'center', minWidth: 110 },
+  mapLabelTitle: { color: '#440077', fontFamily: 'monospace', fontSize: 9, letterSpacing: 4, marginBottom: 2 },
+  mapLabelName:  { color: '#cc88ff', fontFamily: 'monospace', fontSize: 13, letterSpacing: 2, fontWeight: 'bold' },
+  mapDots: { flexDirection: 'row', marginTop: 5, gap: 6 },
+  dot:       { width: 5, height: 5, borderRadius: 3, backgroundColor: '#330055' },
+  dotActive: { backgroundColor: '#aa33ff', shadowColor: '#aa33ff', shadowOpacity: 1, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
   retryText: {
     color: '#00eeff',
     fontFamily: 'monospace',
