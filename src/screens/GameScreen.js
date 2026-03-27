@@ -27,51 +27,193 @@ function detectSwipe(dx, dy) {
 // ═══════════════════════════════════════════════════════
 // CYBERPUNK GRID — fond noir, quadrillage violet statique
 // ═══════════════════════════════════════════════════════
-function CyberpunkGrid() {
-  const STEP       = 38;   // espacement principal
-  const ACCENT     = 4;    // toutes les N lignes = ligne accent plus lumineuse
-  const COL_MAIN   = '#3a0060';  // violet sombre
-  const COL_ACCENT = '#7700cc';  // violet accent
-  const OP_MAIN    = 0.55;
-  const OP_ACCENT  = 0.85;
+function CyberpunkCityBackground() {
+  const scanY  = useRef(new Animated.Value(-60)).current;
+  const pulseO = useRef(new Animated.Value(0.4)).current;
+  const fogO   = useRef(new Animated.Value(0)).current;
 
-  const hLines = [];
-  const vLines = [];
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(scanY, { toValue: height + 60, duration: 4200, useNativeDriver: true })
+    ).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(pulseO, { toValue: 1,   duration: 1300, useNativeDriver: true }),
+      Animated.timing(pulseO, { toValue: 0.4, duration: 1300, useNativeDriver: true }),
+    ])).start();
+    Animated.loop(Animated.sequence([
+      Animated.timing(fogO, { toValue: 1, duration: 4500, useNativeDriver: true }),
+      Animated.timing(fogO, { toValue: 0, duration: 4500, useNativeDriver: true }),
+    ])).start();
+  }, []);
 
-  // Lignes horizontales
-  let row = 0;
-  for (let y = 0; y <= height; y += STEP) {
-    const isAccent = row % ACCENT === 0;
-    hLines.push(
-      <View key={`h${y}`} style={{
-        position: 'absolute', left: 0, top: y,
-        width, height: isAccent ? 1.5 : 0.8,
-        backgroundColor: isAccent ? COL_ACCENT : COL_MAIN,
-        opacity: isAccent ? OP_ACCENT : OP_MAIN,
-      }} />
-    );
-    row++;
-  }
+  const skylineBase = height * 0.46;
 
-  // Lignes verticales
-  let col = 0;
-  for (let x = 0; x <= width; x += STEP) {
-    const isAccent = col % ACCENT === 0;
-    vLines.push(
-      <View key={`v${x}`} style={{
-        position: 'absolute', top: 0, left: x,
-        width: isAccent ? 1.5 : 0.8, height,
-        backgroundColor: isAccent ? COL_ACCENT : COL_MAIN,
-        opacity: isAccent ? OP_ACCENT : OP_MAIN,
-      }} />
-    );
-    col++;
-  }
+  // Bâtiments — positions relatives à la largeur d'écran
+  const BUILDINGS = [
+    { lf: 0.00, wf: 0.14, hf: 0.28 },
+    { lf: 0.11, wf: 0.10, hf: 0.40 },
+    { lf: 0.20, wf: 0.16, hf: 0.22 },
+    { lf: 0.34, wf: 0.10, hf: 0.44 },
+    { lf: 0.43, wf: 0.16, hf: 0.30 },
+    { lf: 0.57, wf: 0.12, hf: 0.36 },
+    { lf: 0.68, wf: 0.17, hf: 0.24 },
+    { lf: 0.83, wf: 0.10, hf: 0.33 },
+    { lf: 0.91, wf: 0.12, hf: 0.26 },
+  ];
+
+  // Dance floor
+  const floorPad = 14;
+  const floorTop = height * 0.50;
+  const floorW   = width - floorPad * 2;
+  const floorH   = height - floorTop - 22;
+  const COLS = 4, ROWS = 3;
+  const cellW = floorW / COLS;
+  const cellH = floorH / ROWS;
+
+  const fogOpacity = fogO.interpolate({ inputRange: [0, 1], outputRange: [0.12, 0.26] });
+  const BL = 28, BT = 2.5, BC = '#aa33ff';
 
   return (
     <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {hLines}
-      {vLines}
+
+      {/* ── CIEL ── */}
+      <View style={{ ...StyleSheet.absoluteFillObject, backgroundColor: '#030008' }} />
+
+      {/* Lueur de ville lointaine */}
+      <View style={{
+        position: 'absolute', left: 0, right: 0,
+        top: skylineBase - 130, height: 150,
+        backgroundColor: '#440099', opacity: 0.22,
+      }} />
+      <View style={{
+        position: 'absolute', left: width * 0.15, right: width * 0.15,
+        top: skylineBase - 75, height: 85,
+        backgroundColor: '#ff22aa', opacity: 0.09, borderRadius: 44,
+      }} />
+
+      {/* ── BÂTIMENTS ── */}
+      {BUILDINGS.map((b, i) => (
+        <View key={i} style={{
+          position: 'absolute',
+          left: b.lf * width,
+          top: skylineBase - b.hf * height,
+          width: b.wf * width,
+          height: b.hf * height,
+          backgroundColor: '#08001a',
+          borderTopColor: '#5500bb', borderTopWidth: 1.5,
+        }} />
+      ))}
+
+      {/* Néons horizontaux sur les bâtiments */}
+      <View style={{ position: 'absolute', left: 0,            top: skylineBase - height * 0.15, width: width * 0.14, height: 1.5, backgroundColor: '#cc44ff', opacity: 0.7 }} />
+      <View style={{ position: 'absolute', left: width * 0.11, top: skylineBase - height * 0.24, width: width * 0.10, height: 1.5, backgroundColor: '#00eeff', opacity: 0.7 }} />
+      <View style={{ position: 'absolute', left: width * 0.34, top: skylineBase - height * 0.30, width: width * 0.10, height: 1.5, backgroundColor: '#ff33cc', opacity: 0.7 }} />
+      <View style={{ position: 'absolute', left: width * 0.57, top: skylineBase - height * 0.20, width: width * 0.12, height: 1.5, backgroundColor: '#33ff88', opacity: 0.65 }} />
+      <View style={{ position: 'absolute', right: 0,           top: skylineBase - height * 0.17, width: width * 0.12, height: 1.5, backgroundColor: '#cc44ff', opacity: 0.65 }} />
+
+      {/* Fenêtres lumineuses */}
+      {[
+        { left: width * 0.13, top: skylineBase - height * 0.30, c: '#00eeff' },
+        { left: width * 0.16, top: skylineBase - height * 0.35, c: '#ff33cc' },
+        { left: width * 0.36, top: skylineBase - height * 0.36, c: '#ffaa00' },
+        { left: width * 0.45, top: skylineBase - height * 0.22, c: '#ff33cc' },
+        { left: width * 0.59, top: skylineBase - height * 0.27, c: '#00eeff' },
+        { left: width * 0.70, top: skylineBase - height * 0.17, c: '#33ff88' },
+        { left: width * 0.85, top: skylineBase - height * 0.24, c: '#cc44ff' },
+        { left: width * 0.22, top: skylineBase - height * 0.16, c: '#ffaa00' },
+        { left: width * 0.51, top: skylineBase - height * 0.18, c: '#00eeff' },
+      ].map((w, i) => (
+        <View key={i} style={{
+          position: 'absolute', left: w.left, top: w.top,
+          width: 6, height: 4, backgroundColor: w.c, opacity: 0.88, borderRadius: 1,
+        }} />
+      ))}
+
+      {/* ── BRUME ── */}
+      <Animated.View style={{
+        position: 'absolute', left: 0, right: 0,
+        top: skylineBase - 50, height: 200,
+        backgroundColor: '#9933cc', opacity: fogOpacity,
+      }} />
+      <View style={{
+        position: 'absolute', left: 0, right: 0,
+        top: skylineBase + 10, height: 70,
+        backgroundColor: '#ffffff', opacity: 0.04,
+      }} />
+
+      {/* ── DANCE FLOOR ── */}
+      {/* Sol foncé */}
+      <View style={{
+        position: 'absolute', left: floorPad, top: floorTop,
+        width: floorW, height: floorH,
+        backgroundColor: '#060012', opacity: 0.92,
+      }} />
+      {/* Grille intérieure */}
+      {Array.from({ length: ROWS + 1 }).map((_, i) => (
+        <View key={`hr${i}`} style={{
+          position: 'absolute', left: floorPad, top: floorTop + i * cellH,
+          width: floorW, height: (i === 0 || i === ROWS) ? 1.5 : 0.8,
+          backgroundColor: '#aa33ff', opacity: (i === 0 || i === ROWS) ? 0.85 : 0.32,
+        }} />
+      ))}
+      {Array.from({ length: COLS + 1 }).map((_, i) => (
+        <View key={`vc${i}`} style={{
+          position: 'absolute', left: floorPad + i * cellW, top: floorTop,
+          width: (i === 0 || i === COLS) ? 1.5 : 0.8, height: floorH,
+          backgroundColor: '#aa33ff', opacity: (i === 0 || i === COLS) ? 0.85 : 0.32,
+        }} />
+      ))}
+      {/* Reflets néon sur le sol */}
+      <View style={{
+        position: 'absolute', left: floorPad + floorW * 0.12, top: floorTop + floorH * 0.42,
+        width: floorW * 0.38, height: 2, backgroundColor: '#ff33cc', opacity: 0.22, borderRadius: 1,
+      }} />
+      <View style={{
+        position: 'absolute', left: floorPad + floorW * 0.42, top: floorTop + floorH * 0.65,
+        width: floorW * 0.30, height: 1.5, backgroundColor: '#00eeff', opacity: 0.18, borderRadius: 1,
+      }} />
+
+      {/* Bordure néon plateau — halo extérieur statique */}
+      <View style={{
+        position: 'absolute', left: floorPad - 5, top: floorTop - 5,
+        width: floorW + 10, height: floorH + 10,
+        borderWidth: 4, borderColor: '#cc44ff', borderRadius: 5, opacity: 0.20,
+        shadowColor: '#cc44ff', shadowOffset: { width: 0, height: 0 }, shadowRadius: 22, shadowOpacity: 1,
+      }} />
+      {/* Bordure néon plateau — principale pulsante */}
+      <Animated.View style={{
+        position: 'absolute', left: floorPad, top: floorTop,
+        width: floorW, height: floorH,
+        borderWidth: 2.5, borderColor: '#cc44ff', borderRadius: 3,
+        opacity: pulseO,
+        shadowColor: '#cc44ff', shadowOffset: { width: 0, height: 0 }, shadowRadius: 16, shadowOpacity: 1,
+      }} />
+
+      {/* Ligne de scan */}
+      <Animated.View style={{
+        position: 'absolute', left: 0, right: 0, height: 2,
+        backgroundColor: '#bb44ff', opacity: 0.45,
+        transform: [{ translateY: scanY }],
+        shadowColor: '#cc44ff', shadowOffset: { width: 0, height: 0 }, shadowRadius: 12, shadowOpacity: 1,
+      }} />
+
+      {/* Brackets coins */}
+      <Animated.View style={{ position: 'absolute', left: 10, top: 44, opacity: pulseO }}>
+        <View style={{ width: BL, height: BT, backgroundColor: BC }} />
+        <View style={{ width: BT, height: BL, backgroundColor: BC, marginTop: -BT }} />
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', right: 10, top: 44, alignItems: 'flex-end', opacity: pulseO }}>
+        <View style={{ width: BL, height: BT, backgroundColor: BC }} />
+        <View style={{ width: BT, height: BL, backgroundColor: BC, marginTop: -BT }} />
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', left: 10, bottom: 18, opacity: pulseO }}>
+        <View style={{ width: BT, height: BL, backgroundColor: BC }} />
+        <View style={{ width: BL, height: BT, backgroundColor: BC, marginTop: -BT }} />
+      </Animated.View>
+      <Animated.View style={{ position: 'absolute', right: 10, bottom: 18, alignItems: 'flex-end', opacity: pulseO }}>
+        <View style={{ width: BT, height: BL, backgroundColor: BC }} />
+        <View style={{ width: BL, height: BT, backgroundColor: BC, marginTop: -BT }} />
+      </Animated.View>
     </View>
   );
 }
@@ -208,7 +350,7 @@ const COMBO_TIERS = [
 ];
 
 function ComboBar({ combo }) {
-  const BAR_W  = width * 0.86;
+  const BAR_W  = width * 0.93;
   const tier   = COMBO_TIERS.find(t => combo >= t.minCombo) || null;
   const nextTh = tier ? (COMBO_TIERS.find(t => t.minCombo > (tier.minCombo)) || { minCombo: tier.minCombo + 5 }).minCombo : 5;
   const prevTh = tier ? tier.minCombo : 0;
@@ -270,14 +412,14 @@ function ComboBar({ combo }) {
       }}>
         {/* Track */}
         <View style={{
-          width: BAR_W, height: 14, borderRadius: 7,
+          width: BAR_W, height: 18, borderRadius: 9,
           backgroundColor: '#150025',
           borderWidth: 1, borderColor: '#330044',
           overflow: 'hidden',
         }}>
           {/* Fill animé */}
           <Animated.View style={{
-            height: '100%', borderRadius: 7,
+            height: '100%', borderRadius: 9,
             backgroundColor: barColor,
             width: animW.interpolate({ inputRange: [0, 1], outputRange: [0, BAR_W] }),
           }} />
@@ -442,6 +584,31 @@ function ScreenFlash({ color, opacity: op }) {
   return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: color, opacity: op }]} />;
 }
 
+function HitText({ text, color }) {
+  const ty = useRef(new Animated.Value(0)).current;
+  const op = useRef(new Animated.Value(1)).current;
+  const sc = useRef(new Animated.Value(0.6)).current;
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(sc, { toValue: 1, friction: 4, tension: 120, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: -45, duration: 650, useNativeDriver: true }),
+      Animated.sequence([
+        Animated.delay(280),
+        Animated.timing(op, { toValue: 0, duration: 370, useNativeDriver: true }),
+      ]),
+    ]).start();
+  }, []);
+  return (
+    <Animated.Text style={{
+      color, fontSize: 18, fontFamily: 'monospace', fontWeight: 'bold', letterSpacing: 2,
+      textShadowColor: color, textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6,
+      opacity: op, transform: [{ translateY: ty }, { scale: sc }],
+    }}>
+      {text}
+    </Animated.Text>
+  );
+}
+
 function SwipeHint({ direction }) {
   if (!direction) return null;
   const color  = ARROW_COLORS[direction] || '#ffffff';
@@ -479,25 +646,31 @@ export default function GameScreen({ navigation }) {
   const [comboTexts,   setComboTexts]   = useState([]);
   const [streaks,      setStreaks]      = useState([]);
   const [showMiss,     setShowMiss]     = useState(false);
-  const [speedTagText, setSpeedTagText] = useState(null);
-  const [speedTagKey,  setSpeedTagKey]  = useState(0);
+  const [speedTagText,   setSpeedTagText]   = useState(null);
+  const [speedTagKey,    setSpeedTagKey]    = useState(0);
+  const [hitTexts,       setHitTexts]       = useState([]);
+  const [evolutionStage, setEvolutionStage] = useState(0);
 
   const scoreScale    = useRef(new Animated.Value(1)).current;
   const flashOpacity  = useRef(new Animated.Value(0)).current;
   const flashColorRef = useRef('#00eeff');
   const badFlash      = useRef(new Animated.Value(0)).current;
 
-  const livesRef     = useRef(5);
-  const scoreRef     = useRef(0);
-  const comboRef     = useRef(0);
-  const activeDirRef = useRef(null);
-  const intervalRef  = useRef(null);
-  const lastSpeedLvl = useRef(0);
-  const particleId   = useRef(0);
-  const comboTextId  = useRef(0);
-  const streakId     = useRef(0);
-  const gameActive   = useRef(true);
-  const swipeHandled = useRef(false);
+  const livesRef      = useRef(5);
+  const scoreRef      = useRef(0);
+  const diffScoreRef  = useRef(0); // 10 pts par flèche, sans bonus combo → difficulté
+  const comboRef      = useRef(0);
+  const activeDirRef  = useRef(null);
+  const intervalRef   = useRef(null);
+  const lastSpeedLvl  = useRef(0);
+  const particleId    = useRef(0);
+  const comboTextId   = useRef(0);
+  const streakId      = useRef(0);
+  const gameActive    = useRef(true);
+  const swipeHandled  = useRef(false);
+  const invulnerable      = useRef(false);
+  const hitTextId         = useRef(0);
+  const evolutionStageRef = useRef(0);
 
   function bounceScore() {
     scoreScale.setValue(2.4);
@@ -518,9 +691,11 @@ export default function GameScreen({ navigation }) {
     swipeHandled.current = false;
   }, []);
 
-  function startTimer(currentScore) {
+  function startTimer() {
     if (intervalRef.current) clearInterval(intervalRef.current);
-    const ms = getIntervalForScore(currentScore);
+    let ms = getIntervalForScore(diffScoreRef.current);
+    // Après la première évolution (combo 10), légèrement plus indulgent
+    if (evolutionStageRef.current >= 1) ms = Math.round(ms * 1.18);
     intervalRef.current = setInterval(() => {
       if (!gameActive.current) return;
       handleMiss();
@@ -528,7 +703,7 @@ export default function GameScreen({ navigation }) {
   }
 
   const handleMiss = useCallback(() => {
-    if (!gameActive.current) return;
+    if (!gameActive.current || invulnerable.current) return;
     clearInterval(intervalRef.current);
     playBadTap();
     triggerFlash('#ff0000', 240);
@@ -543,6 +718,9 @@ export default function GameScreen({ navigation }) {
     const newLives = livesRef.current - 1;
     livesRef.current = newLives;
     setLives(newLives);
+    // 400ms d'invulnérabilité après dégât
+    invulnerable.current = true;
+    setTimeout(() => { invulnerable.current = false; }, 600);
     if (newLives <= 0) {
       gameActive.current = false;
       setTimeout(() => navigation.replace('GameOver', {
@@ -551,7 +729,7 @@ export default function GameScreen({ navigation }) {
       return;
     }
     spawnArrow();
-    startTimer(scoreRef.current);
+    startTimer();
   }, [navigation, spawnArrow]);
 
   const handleGoodSwipe = useCallback((dir) => {
@@ -563,6 +741,9 @@ export default function GameScreen({ navigation }) {
     const newScore = calcScore(scoreRef.current, newCombo);
     scoreRef.current = newScore;
     setScore(newScore);
+    // Score de difficulté : +10 fixes par flèche, indépendant du combo
+    const newDiffScore = diffScoreRef.current + 10;
+    diffScoreRef.current = newDiffScore;
     bounceScore();
     playGoodTap(newCombo);
     const color = ARROW_COLORS[dir] || '#00eeff';
@@ -586,16 +767,36 @@ export default function GameScreen({ navigation }) {
       setTimeout(() => setComboTexts(prev => prev.filter(c => c.id !== cid)), 1500);
     }
 
-    // Speed
-    const newSpeedLvl = Math.floor(newScore / 50);
+    // Speed basée sur diffScore (10 pts par flèche, sans bonus combo)
+    const newSpeedLvl = Math.floor(newDiffScore / 50);
     if (newSpeedLvl > lastSpeedLvl.current) {
       lastSpeedLvl.current = newSpeedLvl;
-      const label = getSpeedLabel(newScore);
+      const label = getSpeedLabel(newDiffScore);
       if (label) {
         playSpeedUp();
         setSpeedTagText(label);
         setSpeedTagKey(k => k + 1);
       }
+    }
+
+    // Texte feedback par swipe (GOOD / GREAT / PERFECT)
+    const hitLabel = newCombo >= 8 ? 'PERFECT!' : newCombo >= 3 ? 'GREAT!' : 'GOOD!';
+    const hitColor = newCombo >= 8 ? '#ff33cc'  : newCombo >= 3 ? '#ffaa00' : '#33ff88';
+    const hid = hitTextId.current++;
+    setHitTexts(prev => [...prev, { id: hid, text: hitLabel, color: hitColor }]);
+    setTimeout(() => setHitTexts(prev => prev.filter(h => h.id !== hid)), 700);
+
+    // Évolution aux paliers 10 / 30 / 60 / 90
+    const MILESTONES = [10, 30, 60, 90];
+    const EVOLUTION_LABELS = ['', 'ÉVOLUTION!', 'POWER UP!', 'ULTRA!!', 'GODLIKE!!!'];
+    if (MILESTONES.includes(newCombo)) {
+      const newStage = MILESTONES.indexOf(newCombo) + 1;
+      evolutionStageRef.current = newStage;
+      setEvolutionStage(newStage);
+      triggerFlash('#ffffff', 350);
+      const eid = comboTextId.current++;
+      setComboTexts(prev => [...prev, { id: eid, text: EVOLUTION_LABELS[newStage], color: 'rainbow', size: 54 }]);
+      setTimeout(() => setComboTexts(prev => prev.filter(c => c.id !== eid)), 2000);
     }
 
     setSwipeDir(dir);
@@ -604,7 +805,7 @@ export default function GameScreen({ navigation }) {
     setTimeout(() => { setCharAnim(0); setSwipeDir(null); }, 650);
 
     spawnArrow();
-    startTimer(newScore);
+    startTimer();
   }, [spawnArrow]);
 
   const panResponder = useRef(
@@ -631,11 +832,20 @@ export default function GameScreen({ navigation }) {
   useEffect(() => {
     gameActive.current = true;
     spawnArrow();
-    startTimer(0);
+    startTimer();
     return () => { gameActive.current = false; clearInterval(intervalRef.current); };
   }, []);
 
   useEffect(() => { if (lives <= 0) saveHighScore(scoreRef.current); }, [lives]);
+
+  // Compression progressive selon le cycle de combo actuel
+  const compressionRatio = (() => {
+    if (combo < 10) return combo / 10;
+    if (combo < 30) return (combo - 10) / 20;
+    if (combo < 60) return (combo - 30) / 30;
+    if (combo < 90) return (combo - 60) / 30;
+    return 0;
+  })();
 
   // ── Positionnement des flèches — le wrapper SVG fait exactement ARROW_RENDER_SIZE
   const AS  = ARROW_RENDER_SIZE;   // 88px = taille réelle du SVG rendu
@@ -659,8 +869,8 @@ export default function GameScreen({ navigation }) {
     <View style={styles.container} {...panResponder.panHandlers}>
       <StatusBar barStyle="light-content" backgroundColor="#06000f" />
 
-      {/* Fond cyberpunk */}
-      <CyberpunkGrid />
+      {/* Fond cyberpunk — ville + dance floor */}
+      <CyberpunkCityBackground />
 
       {/* Flashes */}
       <ScreenFlash color={flashColorRef.current} opacity={flashOpacity} />
@@ -698,7 +908,10 @@ export default function GameScreen({ navigation }) {
 
       {/* Personnage */}
       <View style={[styles.charWrapper, { top: gameCY - 88, left: gameCX - 60 }]} pointerEvents="none">
-        <Character animLevel={charAnim} ouch={ouch} combo={combo} swipeDir={swipeDir} />
+        <Character
+          animLevel={charAnim} ouch={ouch} combo={combo} swipeDir={swipeDir}
+          evolutionStage={evolutionStage} compressionRatio={compressionRatio}
+        />
       </View>
 
       {/* Zone combo / MISS */}
@@ -708,6 +921,11 @@ export default function GameScreen({ navigation }) {
           <ComboText key={ct.id} text={ct.text} color={ct.color}
             size={ct.size} isRainbow={ct.color === 'rainbow'} />
         ))}
+      </View>
+
+      {/* Hit feedback (GOOD / GREAT / PERFECT) */}
+      <View style={[styles.hitZone, { top: gameCY - 118 }]} pointerEvents="none">
+        {hitTexts.map(ht => <HitText key={ht.id} text={ht.text} color={ht.color} />)}
       </View>
 
       {/* Hint swipe */}
@@ -737,4 +955,5 @@ const styles = StyleSheet.create({
   charWrapper: { position: 'absolute' },
   comboZone:   { position: 'absolute', left: 0, right: 0, alignItems: 'center', height: 80 },
   hintArea:    { position: 'absolute', bottom: 30, left: 0, right: 0, alignItems: 'center' },
+  hitZone:     { position: 'absolute', left: 0, right: 0, alignItems: 'center', height: 60 },
 });

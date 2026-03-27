@@ -1,10 +1,24 @@
-// ── Character — Kawaii K-pop, cheveux noirs, tenue électrique ────────────────
+// ── Character — Kawaii K-pop, évolutif avec compression et explosion ──────────
 import React, { useEffect, useRef, useState } from 'react';
-import { Animated, View, Text } from 'react-native';
+import { Animated, View } from 'react-native';
 import Svg, {
   Circle, Ellipse, Path, Rect, Defs,
   RadialGradient, LinearGradient, Stop,
 } from 'react-native-svg';
+
+// ─── Palettes par stade d'évolution ──────────────────────────────────────────
+const STAGE_COLORS = [
+  // 0 — Bleu électrique (départ)
+  { body1: '#1177ff', body2: '#0044cc', legs: '#0033aa', shoes: '#00ccff', star: '#00eeff', note: '#00eeff' },
+  // 1 — Magenta (combo 10)
+  { body1: '#ff33cc', body2: '#aa0077', legs: '#880044', shoes: '#ff99dd', star: '#ffee00', note: '#ff33cc' },
+  // 2 — Or / feu (combo 30)
+  { body1: '#ffaa00', body2: '#cc5500', legs: '#884400', shoes: '#ffee44', star: '#ff3300', note: '#ffaa00' },
+  // 3 — Cyan / glace (combo 60)
+  { body1: '#00ffcc', body2: '#009977', legs: '#004433', shoes: '#aa44ff', star: '#ff33cc', note: '#00ffcc' },
+  // 4 — Violet royal (combo 90)
+  { body1: '#cc44ff', body2: '#6600bb', legs: '#330066', shoes: '#ff33cc', star: '#00eeff', note: '#cc44ff' },
+];
 
 // ─── Note musicale flottante ──────────────────────────────────────────────────
 function MusicalNote({ color = '#00eeff', startX = 0 }) {
@@ -36,7 +50,7 @@ function MusicalNote({ color = '#00eeff', startX = 0 }) {
   );
 }
 
-// ─── Étoile de swipe (éclate au-dessus du perso) ─────────────────────────────
+// ─── Étoile de swipe ─────────────────────────────────────────────────────────
 function SwipeStar({ color }) {
   const scale = useRef(new Animated.Value(0)).current;
   const op    = useRef(new Animated.Value(1)).current;
@@ -66,10 +80,9 @@ function SwipeStar({ color }) {
   );
 }
 
-// ─── SVG du personnage — cheveux noirs, tenue bleue électrique ───────────────
-function CharacterSVG({ ouch = false, swipeDir = null }) {
-  // Couleurs tenue: bleu électrique #1166ff + cyan #00ccff
-  // Cheveux: noir #111111 + reflet #444444
+// ─── SVG du personnage — couleurs variables selon le stade ───────────────────
+function CharacterSVG({ ouch = false, colors }) {
+  const { body1, body2, legs, shoes, star } = colors;
   return (
     <Svg width={120} height={165} viewBox="0 0 110 160">
       <Defs>
@@ -79,16 +92,16 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
           <Stop offset="100%" stopColor="#e8a060" />
         </RadialGradient>
         <LinearGradient id="bodyG" x1="0" y1="0" x2="0" y2="1">
-          <Stop offset="0%"   stopColor="#1177ff" />
-          <Stop offset="100%" stopColor="#0044cc" />
+          <Stop offset="0%"   stopColor={body1} />
+          <Stop offset="100%" stopColor={body2} />
         </LinearGradient>
         <LinearGradient id="hairG" x1="0" y1="0" x2="0" y2="1">
           <Stop offset="0%"   stopColor="#333333" />
           <Stop offset="100%" stopColor="#0a0a0a" />
         </LinearGradient>
         <LinearGradient id="armG" x1="0" y1="0" x2="1" y2="0">
-          <Stop offset="0%"   stopColor="#1177ff" />
-          <Stop offset="100%" stopColor="#0044cc" />
+          <Stop offset="0%"   stopColor={body1} />
+          <Stop offset="100%" stopColor={body2} />
         </LinearGradient>
         <RadialGradient id="irisG" cx="35%" cy="35%" r="60%">
           <Stop offset="0%"   stopColor="#6677ff" />
@@ -106,10 +119,10 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
       {/* Corps */}
       <Ellipse cx="55" cy="130" rx="24" ry="26" fill="url(#bodyG)" />
 
-      {/* Détail étoile sur la tenue */}
+      {/* Étoile tenue */}
       <Path
         d="M55 119 L57.5 126 L65 126 L59.2 130 L61 137 L55 133 L49 137 L50.8 130 L45 126 L52.5 126 Z"
-        fill="#00eeff" opacity={0.9}
+        fill={star} opacity={0.9}
       />
 
       {/* Bras gauche */}
@@ -121,11 +134,11 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
       <Circle  cx="84" cy="139" r="7" fill="#ffd08a" />
 
       {/* Jambes */}
-      <Ellipse cx="43" cy="153" rx="10" ry="8" fill="#0033aa" />
-      <Ellipse cx="67" cy="153" rx="10" ry="8" fill="#0033aa" />
-      {/* Chaussures cyan */}
-      <Ellipse cx="41" cy="158" rx="11" ry="5" fill="#00ccff" />
-      <Ellipse cx="69" cy="158" rx="11" ry="5" fill="#00ccff" />
+      <Ellipse cx="43" cy="153" rx="10" ry="8" fill={legs} />
+      <Ellipse cx="67" cy="153" rx="10" ry="8" fill={legs} />
+      {/* Chaussures */}
+      <Ellipse cx="41" cy="158" rx="11" ry="5" fill={shoes} />
+      <Ellipse cx="69" cy="158" rx="11" ry="5" fill={shoes} />
 
       {/* Tête */}
       <Circle cx="55" cy="72" r="40" fill="url(#headG)" />
@@ -133,27 +146,23 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
       {/* Cou */}
       <Rect x="47" y="107" width="16" height="12" rx="4" fill="#ffd08a" />
 
-      {/* ── Cheveux noirs mi-longs ondulés ── */}
-      {/* Volume principal */}
+      {/* Cheveux noirs mi-longs ondulés */}
       <Path
         d="M 18 70 C 15 42, 26 20, 55 18 C 84 20, 95 42, 92 70
            C 88 57, 81 50, 78 54 C 74 41, 70 30, 55 28
            C 40 30, 36 41, 32 54 C 29 50, 22 57, 18 70 Z"
         fill="url(#hairG)"
       />
-      {/* Mèche gauche tombante */}
       <Path
         d="M 20 70 C 12 82, 10 98, 17 110 C 21 120, 27 124, 29 120
            C 23 112, 18 100, 22 86 C 24 78, 22 73, 20 70 Z"
         fill="url(#hairG)"
       />
-      {/* Mèche droite tombante */}
       <Path
         d="M 90 70 C 98 82, 100 98, 93 110 C 89 120, 83 124, 81 120
            C 87 112, 92 100, 88 86 C 86 78, 88 73, 90 70 Z"
         fill="url(#hairG)"
       />
-      {/* Reflet cheveux (brillance) */}
       <Path
         d="M 36 26 C 41 22, 56 20, 67 25"
         stroke="#555555" strokeWidth={3} fill="none" opacity={0.7}
@@ -166,7 +175,7 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
       <Ellipse cx="94" cy="74" rx="6" ry="8" fill="#ffd08a" />
       <Ellipse cx="94" cy="74" rx="3.5" ry="5" fill="#e8a060" opacity={0.5} />
 
-      {/* ── Œil gauche ── */}
+      {/* Œil gauche */}
       <Ellipse cx="41" cy="72" rx="10" ry="12" fill="white" />
       <Circle  cx="41" cy="73" r="7.5" fill="url(#irisG)" />
       <Circle  cx="41" cy="73" r="4"   fill="#0a0a1a" />
@@ -176,7 +185,7 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
       <Path d="M 33 81 L 31 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
       <Path d="M 50 81 L 52 84" stroke="#0a0a1a" strokeWidth={1.5} strokeLinecap="round" />
 
-      {/* ── Œil droit ── */}
+      {/* Œil droit */}
       <Ellipse cx="69" cy="72" rx="10" ry="12" fill="white" />
       <Circle  cx="69" cy="73" r="7.5" fill="url(#irisG)" />
       <Circle  cx="69" cy="73" r="4"   fill="#0a0a1a" />
@@ -200,25 +209,35 @@ function CharacterSVG({ ouch = false, swipeDir = null }) {
 }
 
 // ─── Composant principal ──────────────────────────────────────────────────────
-export default function Character({ animLevel = 0, ouch = false, combo = 0, swipeDir = null }) {
+export default function Character({
+  animLevel = 0, ouch = false, combo = 0, swipeDir = null,
+  evolutionStage = 0, compressionRatio = 0,
+}) {
   const ty        = useRef(new Animated.Value(0)).current;
   const rot       = useRef(new Animated.Value(0)).current;
   const sx        = useRef(new Animated.Value(1)).current;
   const sy        = useRef(new Animated.Value(1)).current;
   const ouchShake = useRef(new Animated.Value(0)).current;
-  const lean      = useRef(new Animated.Value(0)).current; // lean vers direction du swipe
+  const lean      = useRef(new Animated.Value(0)).current;
+
+  // Compression progressive (s'accumule avec le combo)
+  const compressAnim   = useRef(new Animated.Value(0)).current;
+  // Explosion d'évolution
+  const explosionScale = useRef(new Animated.Value(1)).current;
+  const explosionFlash = useRef(new Animated.Value(0)).current;
+  const prevStageRef   = useRef(0);
 
   const [notes,      setNotes]      = useState([]);
   const [swipeStars, setSwipeStars] = useState([]);
-  const noteId   = useRef(0);
-  const starId   = useRef(0);
-  const idleRef  = useRef(null);
+  const noteId  = useRef(0);
+  const starId  = useRef(0);
+  const idleRef = useRef(null);
 
   function startIdle() {
     idleRef.current = Animated.loop(
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(ty,  { toValue: -7,   duration: 750, useNativeDriver: true }),
+          Animated.timing(ty,  { toValue: -7,    duration: 750, useNativeDriver: true }),
           Animated.timing(rot, { toValue: -0.03, duration: 750, useNativeDriver: true }),
         ]),
         Animated.parallel([
@@ -239,16 +258,16 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
     if (level === 1) {
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(ty,  { toValue: -22, duration: 130, useNativeDriver: true }),
+          Animated.timing(ty,  { toValue: -22,  duration: 130, useNativeDriver: true }),
           Animated.timing(rot, { toValue: 0.18, duration: 130, useNativeDriver: true }),
           Animated.timing(sx,  { toValue: 1.15, duration: 130, useNativeDriver: true }),
           Animated.timing(sy,  { toValue: 1.15, duration: 130, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.spring(ty,  { toValue: 0, useNativeDriver: true }),
+          Animated.spring(ty,  { toValue: 0,     useNativeDriver: true }),
           Animated.spring(rot, { toValue: -0.18, useNativeDriver: true }),
-          Animated.spring(sx,  { toValue: 1, useNativeDriver: true }),
-          Animated.spring(sy,  { toValue: 1, useNativeDriver: true }),
+          Animated.spring(sx,  { toValue: 1,     useNativeDriver: true }),
+          Animated.spring(sy,  { toValue: 1,     useNativeDriver: true }),
         ]),
         Animated.spring(rot, { toValue: 0, useNativeDriver: true }),
       ]).start(() => startIdle());
@@ -271,10 +290,10 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
     } else if (level === 3) {
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(ty, { toValue: -32, duration: 140, useNativeDriver: true }),
-          Animated.timing(sx, { toValue: 1.35, duration: 140, useNativeDriver: true }),
-          Animated.timing(sy, { toValue: 0.78, duration: 140, useNativeDriver: true }),
-          Animated.timing(rot, { toValue: 0.4, duration: 140, useNativeDriver: true }),
+          Animated.timing(ty,  { toValue: -32, duration: 140, useNativeDriver: true }),
+          Animated.timing(sx,  { toValue: 1.35, duration: 140, useNativeDriver: true }),
+          Animated.timing(sy,  { toValue: 0.78, duration: 140, useNativeDriver: true }),
+          Animated.timing(rot, { toValue: 0.4,  duration: 140, useNativeDriver: true }),
         ]),
         Animated.parallel([
           Animated.spring(ty,  { toValue: 0,    useNativeDriver: true }),
@@ -288,19 +307,19 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
     } else if (level === 4) {
       Animated.sequence([
         Animated.parallel([
-          Animated.timing(sy, { toValue: 0.72, duration: 80, useNativeDriver: true }),
-          Animated.timing(sx, { toValue: 1.38, duration: 80, useNativeDriver: true }),
+          Animated.timing(sy,  { toValue: 0.72, duration: 80, useNativeDriver: true }),
+          Animated.timing(sx,  { toValue: 1.38, duration: 80, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(ty, { toValue: -42, duration: 120, useNativeDriver: true }),
-          Animated.timing(sy, { toValue: 1.42, duration: 120, useNativeDriver: true }),
-          Animated.timing(sx, { toValue: 0.72, duration: 120, useNativeDriver: true }),
+          Animated.timing(ty,  { toValue: -42,  duration: 120, useNativeDriver: true }),
+          Animated.timing(sy,  { toValue: 1.42, duration: 120, useNativeDriver: true }),
+          Animated.timing(sx,  { toValue: 0.72, duration: 120, useNativeDriver: true }),
           Animated.timing(rot, { toValue: 0.38, duration: 120, useNativeDriver: true }),
         ]),
         Animated.parallel([
-          Animated.timing(ty, { toValue: 0, duration: 100, useNativeDriver: true }),
-          Animated.timing(sy, { toValue: 0.76, duration: 100, useNativeDriver: true }),
-          Animated.timing(sx, { toValue: 1.32, duration: 100, useNativeDriver: true }),
+          Animated.timing(ty,  { toValue: 0,     duration: 100, useNativeDriver: true }),
+          Animated.timing(sy,  { toValue: 0.76,  duration: 100, useNativeDriver: true }),
+          Animated.timing(sx,  { toValue: 1.32,  duration: 100, useNativeDriver: true }),
           Animated.timing(rot, { toValue: -0.38, duration: 100, useNativeDriver: true }),
         ]),
         Animated.parallel([
@@ -315,11 +334,11 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
   function playOuch() {
     stopIdle();
     Animated.sequence([
-      Animated.timing(sx, { toValue: 0.9, duration: 60, useNativeDriver: true }),
-      Animated.timing(ouchShake, { toValue: 1,  duration: 50, useNativeDriver: true }),
-      Animated.timing(ouchShake, { toValue: -1, duration: 50, useNativeDriver: true }),
-      Animated.timing(ouchShake, { toValue: 1,  duration: 50, useNativeDriver: true }),
-      Animated.timing(ouchShake, { toValue: -1, duration: 50, useNativeDriver: true }),
+      Animated.timing(sx,        { toValue: 0.9,  duration: 60, useNativeDriver: true }),
+      Animated.timing(ouchShake, { toValue: 1,    duration: 50, useNativeDriver: true }),
+      Animated.timing(ouchShake, { toValue: -1,   duration: 50, useNativeDriver: true }),
+      Animated.timing(ouchShake, { toValue: 1,    duration: 50, useNativeDriver: true }),
+      Animated.timing(ouchShake, { toValue: -1,   duration: 50, useNativeDriver: true }),
       Animated.parallel([
         Animated.timing(ouchShake, { toValue: 0, duration: 50, useNativeDriver: true }),
         Animated.spring(sx, { toValue: 1, useNativeDriver: true }),
@@ -328,7 +347,35 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
     ]).start(() => startIdle());
   }
 
-  // Réaction au swipe : lean dans la direction
+  // Compression progressive (se remet à 0 quand le combo reset)
+  useEffect(() => {
+    Animated.timing(compressAnim, {
+      toValue: compressionRatio,
+      duration: 150,
+      useNativeDriver: true,
+    }).start();
+  }, [compressionRatio]);
+
+  // Explosion + réapparition à chaque nouveau stade d'évolution
+  useEffect(() => {
+    if (evolutionStage > prevStageRef.current) {
+      prevStageRef.current = evolutionStage;
+      stopIdle();
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(explosionScale, { toValue: 1.9, duration: 80,  useNativeDriver: true }),
+          Animated.timing(explosionFlash, { toValue: 1,   duration: 80,  useNativeDriver: true }),
+        ]),
+        Animated.parallel([
+          Animated.timing(explosionScale, { toValue: 0,   duration: 140, useNativeDriver: true }),
+          Animated.timing(explosionFlash, { toValue: 0,   duration: 100, useNativeDriver: true }),
+        ]),
+        Animated.spring(explosionScale, { toValue: 1, friction: 4, tension: 80, useNativeDriver: true }),
+      ]).start(() => startIdle());
+    }
+  }, [evolutionStage]);
+
+  // Réaction au swipe
   useEffect(() => {
     if (swipeDir && !ouch) {
       const leanVal = swipeDir === 'right' ? 0.25 : swipeDir === 'left' ? -0.25 : 0;
@@ -344,8 +391,7 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
         ]),
       ]).start();
 
-      // Étoiles de swipe
-      const sid = starId.current++;
+      const sid   = starId.current++;
       const color = { up: '#00eeff', down: '#ff33cc', left: '#ffaa00', right: '#33ff88' }[swipeDir] || '#fff';
       setSwipeStars(prev => [...prev, { id: sid, color }]);
       setTimeout(() => setSwipeStars(prev => prev.filter(s => s.id !== sid)), 700);
@@ -371,28 +417,52 @@ export default function Character({ animLevel = 0, ouch = false, combo = 0, swip
     }
   }, [combo]);
 
-  const ouchTx = ouchShake.interpolate({ inputRange: [-1, 0, 1], outputRange: [-12, 0, 12] });
-  const rotStr = rot.interpolate({ inputRange: [-6.5, 6.5], outputRange: ['-372deg', '372deg'] });
-  const leanStr = lean.interpolate({ inputRange: [-0.5, 0.5], outputRange: ['-28deg', '28deg'] });
+  const ouchTx    = ouchShake.interpolate({ inputRange: [-1, 0, 1], outputRange: [-12, 0, 12] });
+  const rotStr    = rot.interpolate({ inputRange: [-6.5, 6.5], outputRange: ['-372deg', '372deg'] });
+  const leanStr   = lean.interpolate({ inputRange: [-0.5, 0.5], outputRange: ['-28deg', '28deg'] });
+  const compressY = compressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 0.70] });
+  const compressX = compressAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.22] });
+
+  const colors = STAGE_COLORS[Math.min(evolutionStage, STAGE_COLORS.length - 1)];
 
   return (
     <View style={{ alignItems: 'center', justifyContent: 'center', width: 140, height: 190 }}>
       {/* Étoiles swipe */}
       {swipeStars.map(s => <SwipeStar key={s.id} color={s.color} />)}
-      {/* Notes musicales */}
-      {notes.map(n => <MusicalNote key={n.id} color="#00eeff" startX={n.x} />)}
+      {/* Notes musicales colorées selon le stade */}
+      {notes.map(n => <MusicalNote key={n.id} color={colors.note} startX={n.x} />)}
 
+      {/* Wrapper explosion (scale global) */}
       <Animated.View style={{
-        transform: [
-          { translateY: ty },
-          { translateX: ouchTx },
-          { rotate: rotStr },
-          { rotate: leanStr },
-          { scaleX: sx },
-          { scaleY: sy },
-        ],
+        transform: [{ scale: explosionScale }],
+        alignItems: 'center', justifyContent: 'center',
+        width: 140, height: 190,
       }}>
-        <CharacterSVG ouch={ouch} swipeDir={swipeDir} />
+        {/* Wrapper compression (squash progressif) */}
+        <Animated.View style={{ transform: [{ scaleX: compressX }, { scaleY: compressY }] }}>
+          {/* Wrapper danse (animations par combo) */}
+          <Animated.View style={{
+            transform: [
+              { translateY: ty },
+              { translateX: ouchTx },
+              { rotate: rotStr },
+              { rotate: leanStr },
+              { scaleX: sx },
+              { scaleY: sy },
+            ],
+          }}>
+            <CharacterSVG ouch={ouch} colors={colors} />
+          </Animated.View>
+        </Animated.View>
+
+        {/* Flash d'évolution */}
+        <Animated.View pointerEvents="none" style={{
+          position: 'absolute',
+          width: 140, height: 190,
+          backgroundColor: colors.star,
+          opacity: explosionFlash,
+          borderRadius: 80,
+        }} />
       </Animated.View>
     </View>
   );
