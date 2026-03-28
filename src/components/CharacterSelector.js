@@ -3,17 +3,21 @@ import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 
 export const CHARACTERS = [
-  { id: 'dev',       label: '🕺 LE DEV'      },
-  { id: 'forest',    label: '🌿 EXPLORATEUR' },
-  { id: 'astronaut', label: '🚀 ASTRONAUTE'  },
-  { id: 'city',      label: '🏙️ CITY'        },
   { id: 'disco',     label: '🪩 DISCO'       },
+  { id: 'forest',    label: '🌿 EXPLORER'    },
+  { id: 'city',      label: '🏙️ CITY'        },
+  { id: 'astronaut', label: '🚀 ASTRONAUT'   },
   { id: 'void',      label: '◈  BIENTÔT'    },
 ];
 
-export default function CharacterSelector({ charIndex, onChange }) {
+// Score requis pour débloquer chaque personnage
+export const CHAR_UNLOCKS = [0, 1000, 2000, 3000, Infinity];
+
+export default function CharacterSelector({ charIndex: charIndexRaw, onChange, highScore = 0 }) {
+  const charIndex = Math.min(Math.max(charIndexRaw ?? 0, 0), CHARACTERS.length - 1);
   const prev = () => onChange((charIndex - 1 + CHARACTERS.length) % CHARACTERS.length);
   const next = () => onChange((charIndex + 1) % CHARACTERS.length);
+  const locked = highScore < CHAR_UNLOCKS[charIndex];
 
   return (
     <View style={styles.selector}>
@@ -23,10 +27,18 @@ export default function CharacterSelector({ charIndex, onChange }) {
 
       <View style={styles.label}>
         <Text style={styles.labelTitle}>PERSO</Text>
-        <Text style={styles.labelName}>{CHARACTERS[charIndex].label}</Text>
+        {locked ? (
+          <Text style={styles.lockIcon}>🔒</Text>
+        ) : (
+          <Text style={styles.labelName}>{CHARACTERS[charIndex].label}</Text>
+        )}
         <View style={styles.dots}>
           {CHARACTERS.map((_, i) => (
-            <View key={i} style={[styles.dot, i === charIndex && styles.dotActive]} />
+            <View key={i} style={[
+              styles.dot,
+              i === charIndex && styles.dotActive,
+              highScore < CHAR_UNLOCKS[i] && styles.dotLocked,
+            ]} />
           ))}
         </View>
       </View>
@@ -93,5 +105,16 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 0 },
+  },
+  dotLocked: {
+    backgroundColor: '#1a0a2a',
+    borderWidth: 1,
+    borderColor: '#330055',
+  },
+  lockScore: {
+    color: '#550088',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    letterSpacing: 2,
   },
 });

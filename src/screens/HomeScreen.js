@@ -11,22 +11,23 @@ import CharacterAstronaut from '../components/CharacterAstronaut';
 import CharacterCity from '../components/CharacterCity';
 import CharacterDisco from '../components/CharacterDisco';
 import EmptyCharacter from '../components/EmptyCharacter';
-import CharacterSelector from '../components/CharacterSelector';
+import CharacterSelector, { CHAR_UNLOCKS, CHARACTERS } from '../components/CharacterSelector';
 import SpaceBackgroundAnimation from '../components/SpaceMenuAnimation';
 import VoidBackground from '../components/VoidBackground';
 import CityBackground from '../components/CityBackground';
 import JungleBackground from '../components/JungleBackground';
-import SpaceBackground2 from '../components/SpaceBackground2';
 import DiscoBackground from '../components/DiscoBackground';
 
 const MAPS = [
-  { id: 'void',    label: '◈  VIDE'    },
-  { id: 'space',   label: '🌌 ESPACE'  },
-  { id: 'space2',  label: '🌀 ESPACE 2' },
-  { id: 'city',    label: '🏙️ CITY'   },
-  { id: 'jungle',  label: '🌿 JUNGLE'  },
   { id: 'disco',   label: '🪩 DISCO'   },
+  { id: 'jungle',  label: '🌿 JUNGLE'  },
+  { id: 'city',    label: '🏙️ CITY'   },
+  { id: 'space',   label: '🌌 ESPACE'  },
+  { id: 'void',    label: '⬡  BIENTÔT' },
 ];
+
+// Score requis pour débloquer chaque map
+const MAP_UNLOCKS = [0, 1000, 2000, 3000, Infinity];
 
 const { width, height } = Dimensions.get('window');
 
@@ -46,51 +47,47 @@ export default function HomeScreen({ navigation }) {
     AsyncStorage.getItem('highScore').then(val => {
       if (val) setHighScore(parseInt(val, 10));
     });
-    AsyncStorage.getItem('selectedMap').then(val => {
-      if (val !== null) setMapIndex(parseInt(val, 10));
-    });
-    AsyncStorage.getItem('selectedChar').then(val => {
-      if (val !== null) setCharIndex(parseInt(val, 10));
-    });
 
     // Blink title
-    Animated.loop(
+    const blinkAnim = Animated.loop(
       Animated.sequence([
         Animated.timing(blink, { toValue: 0.3, duration: 500, useNativeDriver: true }),
         Animated.timing(blink, { toValue: 1,   duration: 500, useNativeDriver: true }),
         Animated.delay(800),
       ])
-    ).start();
+    );
+    blinkAnim.start();
 
     // Button glow pulse
-    Animated.loop(
+    const glowAnim = Animated.loop(
       Animated.sequence([
         Animated.timing(btnGlow, { toValue: 1, duration: 900, useNativeDriver: true }),
         Animated.timing(btnGlow, { toValue: 0, duration: 900, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    glowAnim.start();
 
     // Subtitle float
-    Animated.loop(
+    const floatAnim = Animated.loop(
       Animated.sequence([
         Animated.timing(subFloat, { toValue: -5, duration: 1400, useNativeDriver: true }),
         Animated.timing(subFloat, { toValue:  5, duration: 1400, useNativeDriver: true }),
       ])
-    ).start();
+    );
+    floatAnim.start();
+
+    return () => { blinkAnim.stop(); glowAnim.stop(); floatAnim.stop(); };
   }, []);
 
   const btnShadowOpacity = btnGlow.interpolate({ inputRange: [0, 1], outputRange: [0.4, 1] });
   const btnShadowRadius  = btnGlow.interpolate({ inputRange: [0, 1], outputRange: [6, 18] });
 
   function changeMap(dir) {
-    const next = (mapIndex + dir + MAPS.length) % MAPS.length;
-    setMapIndex(next);
-    AsyncStorage.setItem('selectedMap', String(next));
+    setMapIndex(i => (i + dir + MAPS.length) % MAPS.length);
   }
 
   function handleCharChange(next) {
     setCharIndex(next);
-    AsyncStorage.setItem('selectedChar', String(next));
   }
 
   return (
@@ -98,7 +95,9 @@ export default function HomeScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor="#050214" />
 
       {/* Fond selon la map sélectionnée */}
-      {mapIndex === 1 ? <SpaceBackgroundAnimation /> : mapIndex === 2 ? <SpaceBackground2 /> : mapIndex === 3 ? <CityBackground /> : mapIndex === 4 ? <JungleBackground /> : mapIndex === 5 ? <DiscoBackground /> : <VoidBackground />}
+      {highScore >= MAP_UNLOCKS[mapIndex]
+        ? (mapIndex === 0 ? <DiscoBackground /> : mapIndex === 1 ? <JungleBackground /> : mapIndex === 2 ? <CityBackground /> : mapIndex === 3 ? <SpaceBackgroundAnimation /> : <VoidBackground />)
+        : null}
 
       {/* UI par-dessus */}
       <View style={styles.uiContainer}>
@@ -128,37 +127,30 @@ export default function HomeScreen({ navigation }) {
             DANCE
           </Animated.Text>
           <Animated.Text style={[styles.subtitle, { transform: [{ translateY: subFloat }] }]}>
-            ♪ TAP THE BEAT ♪
+            ♪ SCROLL THE BEAT ♪
           </Animated.Text>
         </View>
 
         {/* Character preview */}
         <View style={styles.charWrapper}>
-          {charIndex === 0
-            ? (
-              <View style={styles.lockedWrapper}>
-                <Character animLevel={0} ouch={false} combo={0} />
-                <View style={styles.lockedOverlay}>
-                  <Text style={styles.lockIcon}>🔒</Text>
-                  <Text style={styles.lockLabel}>Déblocable</Text>
-                  <Text style={styles.lockSecret}>????</Text>
-                </View>
-              </View>
-            )
+          {highScore < CHAR_UNLOCKS[charIndex] ? (
+            <View style={styles.mysteryChar}>
+              <Text style={styles.mysteryText}>🔒</Text>
+            </View>
+          ) : charIndex === 0
+            ? <CharacterDisco animLevel={0} ouch={false} combo={0} />
             : charIndex === 1
             ? <CharacterForest animLevel={0} ouch={false} combo={0} />
             : charIndex === 2
-            ? <CharacterAstronaut animLevel={0} ouch={false} combo={0} />
-            : charIndex === 3
             ? <CharacterCity animLevel={0} ouch={false} combo={0} />
-            : charIndex === 4
-            ? <CharacterDisco animLevel={0} ouch={false} combo={0} />
+            : charIndex === 3
+            ? <CharacterAstronaut animLevel={0} ouch={false} combo={0} />
             : null
           }
         </View>
 
         {/* Sélecteur de personnage */}
-        <CharacterSelector charIndex={charIndex} onChange={handleCharChange} />
+        <CharacterSelector charIndex={charIndex} onChange={handleCharChange} highScore={highScore} />
 
         {/* Play button */}
         <Animated.View
@@ -197,10 +189,18 @@ export default function HomeScreen({ navigation }) {
 
           <View style={styles.mapLabel}>
             <Text style={styles.mapLabelTitle}>MAP</Text>
-            <Text style={styles.mapLabelName}>{MAPS[mapIndex].label}</Text>
+            {highScore < MAP_UNLOCKS[mapIndex] ? (
+              <Text style={{ fontSize: 22 }}>🔒</Text>
+            ) : (
+              <Text style={styles.mapLabelName}>{MAPS[mapIndex].label}</Text>
+            )}
             <View style={styles.mapDots}>
               {MAPS.map((_, i) => (
-                <View key={i} style={[styles.dot, i === mapIndex && styles.dotActive]} />
+                <View key={i} style={[
+                  styles.dot,
+                  i === mapIndex && styles.dotActive,
+                  highScore < MAP_UNLOCKS[i] && styles.dotLocked,
+                ]} />
               ))}
             </View>
           </View>
@@ -297,6 +297,36 @@ const styles = StyleSheet.create({
   },
   charWrapper: {
     marginVertical: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mysteryChar: {
+    width: 140,
+    height: 190,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#330055',
+    borderRadius: 12,
+    borderStyle: 'dashed',
+    backgroundColor: 'rgba(10, 0, 30, 0.4)',
+  },
+  mysteryText: {
+    color: '#550088',
+    fontFamily: 'monospace',
+    fontSize: 32,
+    fontWeight: 'bold',
+    letterSpacing: 6,
+    textShadowColor: '#550088',
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: 8,
+  },
+  mysteryScore: {
+    color: '#440066',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    letterSpacing: 1,
+    marginTop: 8,
   },
   lockedWrapper: {
     position: 'relative',
@@ -422,6 +452,17 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 4,
     shadowOffset: { width: 0, height: 0 },
+  },
+  dotLocked: {
+    backgroundColor: '#1a0a2a',
+    borderWidth: 1,
+    borderColor: '#330055',
+  },
+  mapLockScore: {
+    color: '#550088',
+    fontFamily: 'monospace',
+    fontSize: 11,
+    letterSpacing: 2,
   },
   footer: {
     position: 'absolute',

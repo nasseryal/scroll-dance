@@ -167,9 +167,19 @@ export default function LeaderboardScreen({ navigation }) {
             })}
 
             {/* Vide */}
+            {tab === 0 && globalScores.length === 0 && (
+              <Text style={styles.emptyText}>
+                Aucun score encore.{'\n'}Joue une partie pour apparaître !
+              </Text>
+            )}
             {tab === 1 && countryScores.length === 0 && (
               <Text style={styles.emptyText}>
                 Aucun score pour {countryLabel}{'\n'}Joue une partie pour apparaître !
+              </Text>
+            )}
+            {tab === 2 && byCountryScores.length === 0 && (
+              <Text style={styles.emptyText}>
+                Aucun score encore.{'\n'}Joue une partie pour apparaître !
               </Text>
             )}
 

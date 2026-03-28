@@ -143,6 +143,68 @@ function BuildingSet({ svgH }) {
   );
 }
 
+// ── Étoiles fixes ────────────────────────────────────────────────────────────
+const starRand = makeRand(0xA77E);
+const STARS = Array.from({ length: 80 }, () => ({
+  x:    starRand() * SW,
+  y:    starRand() * SH * 0.52,
+  r:    0.5 + starRand() * 1.8,
+  op:   0.35 + starRand() * 0.65,
+}));
+
+function StarField() {
+  return (
+    <View pointerEvents="none" style={StyleSheet.absoluteFill}>
+      {STARS.map((s, i) => (
+        <View key={i} style={{
+          position: 'absolute', left: s.x, top: s.y,
+          width: s.r * 2, height: s.r * 2, borderRadius: s.r,
+          backgroundColor: '#ffffff', opacity: s.op,
+        }} />
+      ))}
+    </View>
+  );
+}
+
+// ── Étoile filante ────────────────────────────────────────────────────────────
+function ShootingStar() {
+  const tx  = useRef(new Animated.Value(0)).current;
+  const ty  = useRef(new Animated.Value(0)).current;
+  const op  = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    const shoot = () => {
+      const startX = SW * (0.3 + Math.random() * 0.6);
+      const startY = SH * (0.02 + Math.random() * 0.2);
+      const dist   = 100 + Math.random() * 160;
+      tx.setValue(startX);
+      ty.setValue(startY);
+      op.setValue(0);
+      Animated.sequence([
+        Animated.parallel([
+          Animated.timing(op, { toValue: 1,    duration: 120, useNativeDriver: true }),
+          Animated.timing(tx, { toValue: startX - dist * 0.7, duration: 500, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+          Animated.timing(ty, { toValue: startY + dist * 0.5, duration: 500, easing: Easing.out(Easing.quad), useNativeDriver: true }),
+        ]),
+        Animated.timing(op, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start(() => setTimeout(shoot, 4000 + Math.random() * 8000));
+    };
+    const t = setTimeout(shoot, 2000 + Math.random() * 5000);
+    return () => clearTimeout(t);
+  }, []);
+
+  return (
+    <Animated.View pointerEvents="none" style={{
+      position: 'absolute', top: 0, left: 0,
+      width: 55, height: 1.5, borderRadius: 1,
+      backgroundColor: '#ffffff',
+      opacity: op,
+      transform: [{ translateX: tx }, { translateY: ty }, { rotate: '-35deg' }],
+      shadowColor: '#aaaaff', shadowOpacity: 1, shadowRadius: 4, shadowOffset: { width: 0, height: 0 },
+    }} />
+  );
+}
+
 // ── Lune néon ─────────────────────────────────────────────────────────────────
 function NeonMoon() {
   const pulse = useRef(new Animated.Value(0.7)).current;
@@ -187,10 +249,9 @@ export default function CityBackground() {
       <View style={styles.skyTop} />
       <View style={styles.skyMid} />
 
-      {/* Halos colorés lointains */}
-      <View style={[styles.farGlow, { left: SW * 0.15, backgroundColor: '#cc00ff' }]} />
-      <View style={[styles.farGlow, { left: SW * 0.6,  backgroundColor: '#00ccff' }]} />
-      <View style={[styles.farGlow, { left: SW * 0.82, backgroundColor: '#ff0066', width: 100, height: 100 }]} />
+      {/* Étoiles */}
+      <StarField />
+      <ShootingStar />
 
       {/* Lune */}
       <NeonMoon />

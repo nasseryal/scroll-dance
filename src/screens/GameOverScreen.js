@@ -174,13 +174,13 @@ function CyberpunkGrid() {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 const MAPS = [
-  { id: 'void',   label: '◈  VIDE'    },
-  { id: 'space',  label: '🌌 ESPACE'  },
-  { id: 'space2', label: '🌀 ESPACE 2' },
-  { id: 'city',   label: '🏙️ CITY'   },
-  { id: 'jungle', label: '🌿 JUNGLE'  },
   { id: 'disco',  label: '🪩 DISCO'   },
+  { id: 'jungle', label: '🌿 JUNGLE'  },
+  { id: 'city',   label: '🏙️ CITY'   },
+  { id: 'space',  label: '🌌 ESPACE'  },
+  { id: 'void',   label: '⬡  BIENTÔT' },
 ];
+const MAP_UNLOCKS = [0, 1000, 2000, 3000, Infinity];
 
 export default function GameOverScreen({ navigation, route }) {
   function handleLeaderboard() { navigation.navigate('Leaderboard'); }
@@ -204,7 +204,9 @@ export default function GameOverScreen({ navigation, route }) {
   }, []);
 
   function handleRetry() { navigation.replace('Game', { mapIndex, charIndex }); }
-  function changeMap(dir) { setMapIndex(i => (i + dir + MAPS.length) % MAPS.length); }
+  function changeMap(dir) {
+    setMapIndex(i => (i + dir + MAPS.length) % MAPS.length);
+  }
   function handleHome()  { navigation.navigate('Home'); }
 
   return (
@@ -246,10 +248,18 @@ export default function GameOverScreen({ navigation, route }) {
             </TouchableOpacity>
             <View style={styles.mapLabel}>
               <Text style={styles.mapLabelTitle}>MAP</Text>
-              <Text style={styles.mapLabelName}>{MAPS[mapIndex].label}</Text>
+              {highScore < MAP_UNLOCKS[mapIndex] ? (
+                <Text style={{ fontSize: 22 }}>🔒</Text>
+              ) : (
+                <Text style={styles.mapLabelName}>{MAPS[mapIndex].label}</Text>
+              )}
               <View style={styles.mapDots}>
                 {MAPS.map((_, i) => (
-                  <View key={i} style={[styles.dot, i === mapIndex && styles.dotActive]} />
+                  <View key={i} style={[
+                    styles.dot,
+                    i === mapIndex && styles.dotActive,
+                    highScore < MAP_UNLOCKS[i] && styles.dotLocked,
+                  ]} />
                 ))}
               </View>
             </View>
@@ -261,7 +271,7 @@ export default function GameOverScreen({ navigation, route }) {
 
         {/* Sélecteur de personnage */}
         <BounceIn delay={800}>
-          <CharacterSelector charIndex={charIndex} onChange={setCharIndex} />
+          <CharacterSelector charIndex={charIndex} onChange={setCharIndex} highScore={highScore} />
         </BounceIn>
 
         {/* Retry button */}
@@ -423,6 +433,8 @@ const styles = StyleSheet.create({
   mapDots: { flexDirection: 'row', marginTop: 5, gap: 6 },
   dot:       { width: 5, height: 5, borderRadius: 3, backgroundColor: '#330055' },
   dotActive: { backgroundColor: '#aa33ff', shadowColor: '#aa33ff', shadowOpacity: 1, shadowRadius: 4, shadowOffset: { width: 0, height: 0 } },
+  dotLocked: { backgroundColor: '#1a0a2a', borderWidth: 1, borderColor: '#330055' },
+  mapLockScore: { color: '#550088', fontFamily: 'monospace', fontSize: 11, letterSpacing: 2 },
   retryText: {
     color: '#00eeff',
     fontFamily: 'monospace',

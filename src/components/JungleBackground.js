@@ -26,6 +26,8 @@ const LEAF_COLORS = [
   '#1a8c1a', '#22a622', '#17991a', '#0f7a0f',
   '#2db82d', '#19a019', '#0d6e0d', '#33cc33',
   '#145214', '#0a400a',
+  '#c8a265', '#b8925a', '#d4aa70', '#bf9050',
+  '#8b5e3c', '#7a4e30', '#9e6b42', '#a07040',
 ];
 const VINE_COLORS = ['#5c3d1a', '#7a5230', '#6b4423', '#4a2e10'];
 const FLOWER_COLORS = ['#ff4444', '#ff6600', '#ffcc00', '#ff0066', '#ff3399'];
@@ -164,7 +166,7 @@ function TreeSet({ svgH }) {
 }
 
 // ── Feuilles tombantes ────────────────────────────────────────────────────────
-const N_FALLING = 14;
+const N_FALLING = 24;
 const FALL_DATA = Array.from({ length: N_FALLING }, (_, i) => {
   const r = makeRand(i * 8191 + 0x2B4A);
   return {
@@ -230,64 +232,102 @@ function MistLayer({ yFrac, opacity, speed }) {
   );
 }
 
-// ── Rayon de lumière ──────────────────────────────────────────────────────────
-function SunRay({ x, angle, opacity }) {
-  const pulse = useRef(new Animated.Value(opacity * 0.7)).current;
+// ── Rafale de vent ────────────────────────────────────────────────────────────
+const WIND_DATA = Array.from({ length: 8 }, (_, i) => {
+  const r = makeRand(i * 4421 + 0xB33F);
+  return {
+    id: i,
+    y: SH * (0.15 + r() * 0.65),
+    width: SW * (0.3 + r() * 0.5),
+    opacity: 0.06 + r() * 0.1,
+    duration: 900 + r() * 1200,
+    delay: r() * 8000,
+    height: 1.5 + r() * 2.5,
+  };
+});
+
+function WindGust({ y, width, opacity, duration, delay, height }) {
+  const tx = useRef(new Animated.Value(-width)).current;
+  const op = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
-    Animated.loop(Animated.sequence([
-      Animated.timing(pulse, { toValue: opacity, duration: 2500 + Math.random() * 2000, useNativeDriver: true }),
-      Animated.timing(pulse, { toValue: opacity * 0.4, duration: 2500 + Math.random() * 2000, useNativeDriver: true }),
-    ])).start();
+    const run = () => {
+      tx.setValue(-width);
+      op.setValue(0);
+      Animated.parallel([
+        Animated.timing(tx, { toValue: SW + width, duration, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
+        Animated.sequence([
+          Animated.timing(op, { toValue: opacity, duration: duration * 0.25, useNativeDriver: true }),
+          Animated.timing(op, { toValue: 0,       duration: duration * 0.75, useNativeDriver: true }),
+        ]),
+      ]).start(() => setTimeout(run, 2000 + Math.random() * 6000));
+    };
+    setTimeout(run, delay);
   }, []);
+
   return (
     <Animated.View pointerEvents="none" style={{
-      position: 'absolute', top: 0, left: x,
-      width: 28, height: SH * 0.7,
-      backgroundColor: 'rgba(180, 255, 120, 0.07)',
-      opacity: pulse,
-      transform: [{ rotate: `${angle}deg` }, { translateX: -14 }],
+      position: 'absolute', top: y, left: 0,
+      width, height, borderRadius: height,
+      backgroundColor: 'rgba(200, 255, 200, 1)',
+      opacity: op,
+      transform: [{ translateX: tx }],
     }} />
   );
 }
 
 // ── Oiseaux tropicaux ─────────────────────────────────────────────────────────
-const BIRD_DATA = Array.from({ length: 5 }, (_, i) => {
+const BIRD_DATA = Array.from({ length: 12 }, (_, i) => {
   const r = makeRand(i * 3571 + 0x9C2E);
   return {
-    id: i, y: SH * (0.08 + r() * 0.28),
-    duration: 7000 + r() * 9000, delay: r() * 15000,
-    size: 7 + r() * 9, color: BIRD_COLORS[Math.floor(r() * BIRD_COLORS.length)],
+    id: i, y: SH * (0.05 + r() * 0.32),
+    duration: 6000 + r() * 10000, delay: r() * 18000,
+    size: 6 + r() * 10, color: BIRD_COLORS[Math.floor(r() * BIRD_COLORS.length)],
     dirRight: r() > 0.5,
+    pauseMin: 2000 + r() * 4000,
   };
 });
 
-function TropicalBird({ y, duration, delay, size, color, dirRight }) {
-  const tx   = useRef(new Animated.Value(dirRight ? -size * 3 : SW + size)).current;
+function TropicalBird({ y, duration, delay, size, color, dirRight, pauseMin }) {
+  const startX = dirRight ? -SW - 60 : SW + 60;
+  const endX   = dirRight ?  SW + 60 : -SW - 60;
+  const tx   = useRef(new Animated.Value(startX)).current;
   const wing = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
+    const t = setTimeout(() => {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(tx, { toValue: endX, duration, easing: Easing.linear, useNativeDriver: true }),
+          Animated.delay(pauseMin),
+        ])
+      ).start();
+    }, delay);
+
     Animated.loop(Animated.sequence([
-      Animated.delay(delay),
-      Animated.timing(tx, { toValue: dirRight ? SW + size * 3 : -size * 3, duration, easing: Easing.linear, useNativeDriver: true }),
-      Animated.delay(2000 + Math.random() * 5000),
+      Animated.timing(wing, { toValue: 1, duration: 240, useNativeDriver: true }),
+      Animated.timing(wing, { toValue: 0, duration: 240, useNativeDriver: true }),
     ])).start();
-    Animated.loop(Animated.sequence([
-      Animated.timing(wing, { toValue: 1, duration: 260, useNativeDriver: true }),
-      Animated.timing(wing, { toValue: 0, duration: 260, useNativeDriver: true }),
-    ])).start();
+
+    return () => clearTimeout(t);
   }, []);
 
-  const wingRot = wing.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '30deg'] });
+  const wingRot = wing.interpolate({ inputRange: [0, 1], outputRange: ['0deg', '28deg'] });
 
   return (
     <Animated.View pointerEvents="none" style={{
-      position: 'absolute', top: y, left: 0,
-      transform: [{ translateX: tx }, { scaleX: dirRight ? 1 : -1 }],
+      position: 'absolute', top: y, left: 0, width: size * 2, height: size,
+      transform: [{ translateX: tx }],
     }}>
-      <View style={{ width: size * 1.8, height: size * 0.7, borderRadius: size * 0.35, backgroundColor: color, position: 'absolute', top: size * 0.15 }} />
+      <View style={{
+        position: 'absolute', top: size * 0.2, left: 0,
+        width: size * 1.8, height: size * 0.6, borderRadius: size * 0.3,
+        backgroundColor: color,
+      }} />
       <Animated.View style={{
-        width: size * 1.2, height: size * 0.5, borderRadius: size * 0.25,
-        backgroundColor: color, position: 'absolute', top: 0, left: size * 0.3, opacity: 0.8,
+        position: 'absolute', top: 0, left: size * 0.3,
+        width: size * 1.1, height: size * 0.4, borderRadius: size * 0.2,
+        backgroundColor: color, opacity: 0.85,
         transform: [{ rotate: wingRot }],
       }} />
     </Animated.View>
@@ -352,18 +392,13 @@ export default function JungleBackground() {
       <View style={styles.skyMid} />
       <View style={styles.skyBottom} />
 
-      {[0.12, 0.28, 0.44, 0.62, 0.78].map((xFrac, i) => (
-        <SunRay key={i} x={SW * xFrac} angle={-8 + i * 4} opacity={0.06 + i % 3 * 0.03} />
-      ))}
+      {WIND_DATA.map(w => <WindGust key={w.id} {...w} />)}
 
       <Animated.View style={[styles.treeRow, { transform: [{ translateX: scrollX }] }]}>
         <TreeSet svgH={svgH} />
         <TreeSet svgH={svgH} />
       </Animated.View>
 
-      <MistLayer yFrac={0.45} opacity={0.55} speed={22000} />
-      <MistLayer yFrac={0.62} opacity={0.4}  speed={31000} />
-      <MistLayer yFrac={0.78} opacity={0.65} speed={18000} />
 
       <View style={styles.ground}>
         <View style={styles.groundGrass} />

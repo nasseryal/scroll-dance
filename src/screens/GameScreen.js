@@ -11,7 +11,6 @@ import SpaceMenuAnimation from '../components/SpaceMenuAnimation';
 import VoidBackground from '../components/VoidBackground';
 import CityBackground from '../components/CityBackground';
 import JungleBackground from '../components/JungleBackground';
-import SpaceBackground2 from '../components/SpaceBackground2';
 import DiscoBackground from '../components/DiscoBackground';
 import EmptyCharacter from '../components/EmptyCharacter';
 import Character from '../components/Character';
@@ -408,63 +407,73 @@ function ScreenFlash({ color, opacity: op }) {
   return <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: color, opacity: op }]} />;
 }
 
-const HIT_STYLES = {
-  'GOOD!':         { fontSize: 26, letterSpacing: 1 },
-  'GREAT!':        { fontSize: 33, letterSpacing: 2 },
-  'PERFECT!':      { fontSize: 42, letterSpacing: 3 },
-  'AWESOME!':      { fontSize: 44, letterSpacing: 3 },
-  'EXCELLENT!':    { fontSize: 42, letterSpacing: 2 },
-  'OUTSTANDING!':  { fontSize: 36, letterSpacing: 1 },
-  'FANTASTIC!':    { fontSize: 42, letterSpacing: 2 },
-  'INCREDIBLE!':   { fontSize: 40, letterSpacing: 2 },
-  'MIND-BLOWING!': { fontSize: 34, letterSpacing: 1 },
-  'PHENOMENAL!':   { fontSize: 40, letterSpacing: 2 },
-  'LEGENDARY!':    { fontSize: 50, letterSpacing: 4 },
+// Palette multicouche par hit — du fond (outer) vers l'avant (inner)
+const HIT_CONFIG = {
+  'GOOD!':         { fontSize: 28, ls: 1, colors: ['#003399', '#0055ff', '#00ccff', '#aaffff'] },
+  'GREAT!':        { fontSize: 36, ls: 2, colors: ['#550099', '#aa00ff', '#ff00ee', '#ffccff'] },
+  'PERFECT!':      { fontSize: 42, ls: 2, colors: ['#006633', '#00cc66', '#aaff00', '#eeffcc'] },
+  'AWESOME!':      { fontSize: 44, ls: 2, colors: ['#993300', '#ff6600', '#ffcc00', '#ffffaa'] },
+  'EXCELLENT!':    { fontSize: 42, ls: 2, colors: ['#880044', '#ff0077', '#ff44cc', '#ffccee'] },
+  'OUTSTANDING!':  { fontSize: 36, ls: 1, colors: ['#005566', '#00aacc', '#00ffcc', '#ccffff'] },
+  'FANTASTIC!':    { fontSize: 42, ls: 2, colors: ['#660033', '#ff0055', '#ff8800', '#ffddaa'] },
+  'INCREDIBLE!':   { fontSize: 40, ls: 1, colors: ['#880000', '#ff2200', '#ff8800', '#ffee88'] },
+  'MIND-BLOWING!': { fontSize: 34, ls: 1, colors: ['#330077', '#8800ff', '#0055ff', '#ffaa00'] },
+  'PHENOMENAL!':   { fontSize: 40, ls: 1, colors: ['#660077', '#cc00ff', '#ff00aa', '#ffdd44'] },
+  'LEGENDARY!':    { fontSize: 48, ls: 3, colors: ['#773300', '#ffaa00', '#ff0055', '#ffffff'] },
 };
 
-function HitText({ text, color }) {
+function HitText({ text }) {
   const ty = useRef(new Animated.Value(8)).current;
   const op = useRef(new Animated.Value(0)).current;
-  const sc = useRef(new Animated.Value(1.6)).current;
-  const glowColor = useRef(NEON_GLOWS[Math.floor(Math.random() * NEON_GLOWS.length)]).current;
+  const sc = useRef(new Animated.Value(1.7)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.spring(sc, { toValue: 1, friction: 5, tension: 200, useNativeDriver: true }),
       Animated.timing(op, { toValue: 1, duration: 50,  useNativeDriver: true }),
-      Animated.timing(ty, { toValue: -65, duration: 720, useNativeDriver: true }),
+      Animated.timing(ty, { toValue: -70, duration: 750, useNativeDriver: true }),
       Animated.sequence([
-        Animated.delay(300),
-        Animated.timing(op, { toValue: 0, duration: 420, useNativeDriver: true }),
+        Animated.delay(280),
+        Animated.timing(op, { toValue: 0, duration: 440, useNativeDriver: true }),
       ]),
     ]).start();
   }, []);
 
-  const hs = HIT_STYLES[text] || HIT_STYLES['GOOD!'];
+  const cfg = HIT_CONFIG[text] || HIT_CONFIG['GOOD!'];
+  const N = cfg.colors.length;
 
   return (
-    <Animated.Text style={{
-      color,
-      fontSize: hs.fontSize,
-      fontFamily: 'Bungee_400Regular',
-      letterSpacing: hs.letterSpacing,
-      textShadowColor: glowColor,
-      textShadowOffset: { width: 1, height: 1 },
-      textShadowRadius: 6,
+    <Animated.View style={{
+      alignItems: 'center', justifyContent: 'center',
       opacity: op,
       transform: [{ translateY: ty }, { scale: sc }],
     }}>
-      {text}
-    </Animated.Text>
+      {cfg.colors.map((c, i) => {
+        const layerScale = 1 + (N - 1 - i) * 0.065;
+        const isTop = i === N - 1;
+        return (
+          <Text key={i} style={{
+            position: i === 0 ? 'relative' : 'absolute',
+            color: c,
+            fontSize: cfg.fontSize,
+            fontFamily: 'Bungee_400Regular',
+            letterSpacing: cfg.ls,
+            fontWeight: 'bold',
+            textShadowColor: isTop ? c : 'transparent',
+            textShadowOffset: { width: 0, height: 0 },
+            textShadowRadius: isTop ? 14 : 0,
+            transform: [{ scale: layerScale }],
+          }}>{text}</Text>
+        );
+      })}
+    </Animated.View>
   );
 }
 
 function SwipeHint({ direction }) {
-  if (!direction) return null;
-  const color  = ARROW_COLORS[direction] || '#ffffff';
-  const LABELS = { up: '↑ GLISSE', down: '↓ GLISSE', left: '← GLISSE', right: 'GLISSE →' };
   const op = useRef(new Animated.Value(1)).current;
   useEffect(() => {
+    if (!direction) return;
     const a = Animated.loop(Animated.sequence([
       Animated.timing(op, { toValue: 1,   duration: 350, useNativeDriver: true }),
       Animated.timing(op, { toValue: 0.2, duration: 350, useNativeDriver: true }),
@@ -472,6 +481,9 @@ function SwipeHint({ direction }) {
     a.start();
     return () => a.stop();
   }, [direction]);
+  if (!direction) return null;
+  const color  = ARROW_COLORS[direction] || '#ffffff';
+  const LABELS = { up: '↑ GLISSE', down: '↓ GLISSE', left: '← GLISSE', right: 'GLISSE →' };
   return (
     <Animated.Text style={{
       color, fontFamily: 'monospace', fontSize: 14, fontWeight: 'bold', letterSpacing: 3,
@@ -745,8 +757,8 @@ export default function GameScreen({ navigation, route }) {
   const compressionRatio = (combo % 10) / 10;
 
   // ── Positionnement des flèches — le wrapper SVG fait exactement ARROW_RENDER_SIZE
-  const AS  = ARROW_RENDER_SIZE;   // 88px = taille réelle du SVG rendu
-  const MAR = 10;                  // marge depuis bord écran
+  const AS  = ARROW_RENDER_SIZE;   // taille réelle du SVG rendu
+  const MAR = 4;                   // marge depuis bord écran
 
   // Zone de jeu utile (entre HUD et hint)
   const HUD_H  = 130;
@@ -756,8 +768,8 @@ export default function GameScreen({ navigation, route }) {
   const gameCY = HUD_H + gameH / 2;
 
   const arrowPos = {
-    up:    { top: HUD_H + MAR,                  left: gameCX - AS / 2 },
-    down:  { top: HUD_H + gameH - AS - MAR,     left: gameCX - AS / 2 },
+    up:    { top: HUD_H + MAR + 18,              left: gameCX - AS / 2 },
+    down:  { top: HUD_H + gameH - AS - MAR - 18, left: gameCX - AS / 2 },
     left:  { top: gameCY - AS / 2,              left: MAR },
     right: { top: gameCY - AS / 2,              left: width - AS - MAR },
   };
@@ -767,7 +779,7 @@ export default function GameScreen({ navigation, route }) {
       <StatusBar barStyle="light-content" backgroundColor="#050214" />
 
       {/* Fond cyberpunk — ville + dance floor */}
-      {mapIndex === 1 ? <SpaceMenuAnimation /> : mapIndex === 2 ? <SpaceBackground2 /> : mapIndex === 3 ? <CityBackground /> : mapIndex === 4 ? <JungleBackground /> : mapIndex === 5 ? <DiscoBackground /> : <VoidBackground />}
+      {mapIndex === 0 ? <DiscoBackground /> : mapIndex === 1 ? <JungleBackground /> : mapIndex === 2 ? <CityBackground /> : mapIndex === 3 ? <SpaceMenuAnimation /> : <VoidBackground />}
 
       {/* Flashes */}
       <ScreenFlash color={flashColorRef.current} opacity={flashOpacity} />
@@ -806,8 +818,8 @@ export default function GameScreen({ navigation, route }) {
       {/* Personnage */}
       <View style={[styles.charWrapper, { top: gameCY - 95, left: gameCX - 70 }]} pointerEvents="none">
         {charIndex === 0
-          ? <Character
-              animLevel={charAnim} ouch={ouch} combo={combo} swipeDir={swipeDir}
+          ? <CharacterDisco
+              animLevel={charAnim} ouch={ouch} combo={combo}
               evolutionStage={evolutionStage} compressionRatio={compressionRatio}
             />
           : charIndex === 1
@@ -816,17 +828,12 @@ export default function GameScreen({ navigation, route }) {
               evolutionStage={evolutionStage} compressionRatio={compressionRatio}
             />
           : charIndex === 2
-          ? <CharacterAstronaut
-              animLevel={charAnim} ouch={ouch} combo={combo}
-              evolutionStage={evolutionStage} compressionRatio={compressionRatio}
-            />
-          : charIndex === 3
           ? <CharacterCity
               animLevel={charAnim} ouch={ouch} combo={combo}
               evolutionStage={evolutionStage} compressionRatio={compressionRatio}
             />
-          : charIndex === 4
-          ? <CharacterDisco
+          : charIndex === 3
+          ? <CharacterAstronaut
               animLevel={charAnim} ouch={ouch} combo={combo}
               evolutionStage={evolutionStage} compressionRatio={compressionRatio}
             />
@@ -845,7 +852,7 @@ export default function GameScreen({ navigation, route }) {
 
       {/* Hit feedback (GOOD / GREAT / PERFECT) */}
       <View style={[styles.hitZone, { top: gameCY - 118 }]} pointerEvents="none">
-        {hitTexts.map(ht => <HitText key={ht.id} text={ht.text} color={ht.color} />)}
+        {hitTexts.map(ht => <HitText key={ht.id} text={ht.text} />)}
       </View>
 
       {/* Hint swipe */}

@@ -13,7 +13,7 @@ const ARROW_COLORS = {
 const ARROW_PATH = `M 50 5 L 90 45 L 68 45 L 68 75 L 32 75 L 32 45 L 10 45 Z`;
 const ROTATION   = { up: '0deg', down: '180deg', left: '270deg', right: '90deg' };
 
-export const ARROW_RENDER_SIZE = 88;
+export const ARROW_RENDER_SIZE = 96;
 
 export default function ArrowButton({ direction, isActive, postMiss = false, size = ARROW_RENDER_SIZE }) {
   const colors = ARROW_COLORS[direction];
@@ -41,11 +41,11 @@ export default function ArrowButton({ direction, isActive, postMiss = false, siz
   useEffect(() => {
     if (isActive) {
       // Entrée : spring vers 1.32
-      Animated.spring(activeScale, { toValue: 1.32, friction: 3.5, tension: 120, useNativeDriver: true }).start();
-      // Zoom pulse en boucle : 1.18 ↔ 1.36
+      Animated.spring(activeScale, { toValue: 1.55, friction: 3.5, tension: 120, useNativeDriver: true }).start();
+      // Zoom pulse en boucle : 1.42 ↔ 1.62
       zoomLoopRef.current = Animated.loop(Animated.sequence([
-        Animated.timing(activeZoom, { toValue: 1.36, duration: 260, useNativeDriver: true }),
-        Animated.timing(activeZoom, { toValue: 1.14, duration: 260, useNativeDriver: true }),
+        Animated.timing(activeZoom, { toValue: 1.62, duration: 220, useNativeDriver: true }),
+        Animated.timing(activeZoom, { toValue: 1.42, duration: 220, useNativeDriver: true }),
       ]));
       zoomLoopRef.current.start();
       // Glow pulse

@@ -9,19 +9,19 @@ import Svg, {
 const BASE_CITY = {
   skin:       '#f5c89a',
   skinDark:   '#d9a070',
-  hair:       '#1a1a2e',
-  hairLight:  '#2e2e5e',
-  jacket:     '#1a1a2e',
-  jacketDark: '#0d0d1a',
-  jacketTrim: '#00eeff',
-  shirt:      '#e0e0e0',
-  pants:      '#2a2a4a',
-  pantsDark:  '#1a1a3a',
-  shoes:      '#111111',
-  shoesSole:  '#333333',
-  belt:       '#333333',
-  buckle:     '#ffaa00',
-  badge:      '#00eeff',
+  hair:       '#e8e8f0',   // blanc platine
+  hairLight:  '#ffffff',
+  jacket:     '#8b0000',   // rouge sang cyberpunk
+  jacketDark: '#550000',
+  jacketTrim: '#ff00cc',   // trim magenta néon
+  shirt:      '#1a1a1a',   // noir
+  pants:      '#3a4a2a',   // cargo kaki sombre
+  pantsDark:  '#252f18',
+  shoes:      '#222222',
+  shoesSole:  '#ff4400',   // semelle orange néon
+  belt:       '#111111',
+  buckle:     '#ff00cc',   // boucle magenta
+  badge:      '#00ff88',   // badge vert néon
 };
 
 const NEON_PALETTE = [

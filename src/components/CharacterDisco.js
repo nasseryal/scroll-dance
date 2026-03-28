@@ -12,18 +12,18 @@ const NEON_PALETTE = [
 
 // Pièces : 0=veste, 1=pantalon, 2=chapeau, 3=chaussures, 4=chemise, 5=ceinture, 6=nœud
 const BASE_DISCO = {
-  suit:      '#e07800',   // orange sequin
-  suitDark:  '#9a4e00',
-  suitLight: '#ffbb44',
-  hat:       '#c86000',
-  hatBrim:   '#d97000',
+  suit:      '#9900cc',   // violet sequin
+  suitDark:  '#5a007a',
+  suitLight: '#cc44ff',
+  hat:       '#7700aa',
+  hatBrim:   '#aa00dd',
   hatAccent: '#ffd700',
-  shirt:     '#fff8e0',
-  belt:      '#5a3000',
+  shirt:     '#fff0ff',
+  belt:      '#3a003a',
   buckle:    '#ffd700',
-  boot:      '#7a3800',
-  bootSole:  '#3a1800',
-  mic:       '#cccccc',
+  boot:      '#220033',
+  bootSole:  '#440055',
+  mic:       '#e0e0ff',
   skin:      '#f5c89a',
   skinDark:  '#d9a070',
 };
