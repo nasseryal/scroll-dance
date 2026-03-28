@@ -48,32 +48,30 @@ function lightenHex(hex, f = 1.38) {
   return '#' + [r, g, b].map(v => Math.min(255, Math.floor(v * f)).toString(16).padStart(2, '0')).join('');
 }
 
-// Génère un plan de mutation une fois au montage
+// Génère 10 tenues complètes (une par stade d'évolution)
 function generateForestPlan() {
-  const colors = shuffleArray([...NEON_PALETTE]);
-  // 7 pièces mélangées + 3 recyclées
-  const pieces = [
-    ...shuffleArray([0, 1, 2, 3, 4, 5, 6]),
-    ...shuffleArray([0, 1, 2]),
-  ];
-  return colors.map((color, i) => ({ piece: pieces[i], color }));
+  return Array.from({ length: 10 }, () => {
+    const colors = shuffleArray([...NEON_PALETTE]);
+    return {
+      leaf: colors[0], eye: colors[1], vest: colors[2],
+      short: colors[3], boot: colors[4], shirt: colors[5], belt: colors[6],
+    };
+  });
 }
 
 function buildForestColors(evolutionStage, plan) {
-  const c = { ...BASE_FOREST_COLORS };
-  for (let i = 0; i < Math.min(evolutionStage, plan.length); i++) {
-    const { piece, color } = plan[i];
-    const dark  = darkenHex(color);
-    const light = lightenHex(color);
-    if (piece === 0) { c.leaf = color; c.leafDark = dark; c.leafMid = darkenHex(color, 0.72); }
-    else if (piece === 1) { c.eye = color; }
-    else if (piece === 2) { c.vest = dark; c.vestLight = color; c.vestDark = darkenHex(color, 0.35); }
-    else if (piece === 3) { c.short = dark; }
-    else if (piece === 4) { c.boot = darkenHex(color, 0.6); c.bootLace = color; }
-    else if (piece === 5) { c.shirt = lightenHex(color, 1.6); }
-    else if (piece === 6) { c.belt = dark; c.buckle = color; }
-  }
-  return c;
+  if (evolutionStage === 0 || !plan[evolutionStage - 1]) return { ...BASE_FOREST_COLORS };
+  const s = plan[evolutionStage - 1];
+  return {
+    ...BASE_FOREST_COLORS,
+    eye: s.eye,
+    leaf: s.leaf, leafDark: darkenHex(s.leaf), leafMid: darkenHex(s.leaf, 0.72),
+    vest: darkenHex(s.vest), vestLight: s.vest, vestDark: darkenHex(s.vest, 0.35),
+    short: darkenHex(s.short),
+    boot: darkenHex(s.boot, 0.6), bootLace: s.boot,
+    shirt: lightenHex(s.shirt, 1.6),
+    belt: darkenHex(s.belt), buckle: s.belt,
+  };
 }
 
 // ─── Note musicale ────────────────────────────────────────────────────────────

@@ -10,6 +10,9 @@ import ArrowButton, { ARROW_RENDER_SIZE } from '../components/ArrowButton';
 import SpaceMenuAnimation from '../components/SpaceMenuAnimation';
 import VoidBackground from '../components/VoidBackground';
 import CityBackground from '../components/CityBackground';
+import JungleBackground from '../components/JungleBackground';
+import SpaceBackground2 from '../components/SpaceBackground2';
+import DiscoBackground from '../components/DiscoBackground';
 import EmptyCharacter from '../components/EmptyCharacter';
 import Character from '../components/Character';
 import CharacterForest from '../components/CharacterForest';
@@ -764,7 +767,7 @@ export default function GameScreen({ navigation, route }) {
       <StatusBar barStyle="light-content" backgroundColor="#050214" />
 
       {/* Fond cyberpunk — ville + dance floor */}
-      {mapIndex === 1 ? <SpaceMenuAnimation /> : mapIndex === 2 ? <CityBackground /> : <VoidBackground />}
+      {mapIndex === 1 ? <SpaceMenuAnimation /> : mapIndex === 2 ? <SpaceBackground2 /> : mapIndex === 3 ? <CityBackground /> : mapIndex === 4 ? <JungleBackground /> : mapIndex === 5 ? <DiscoBackground /> : <VoidBackground />}
 
       {/* Flashes */}
       <ScreenFlash color={flashColorRef.current} opacity={flashOpacity} />

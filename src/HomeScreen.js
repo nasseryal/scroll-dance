@@ -16,16 +16,12 @@ import SpaceBackgroundAnimation from '../components/SpaceMenuAnimation';
 import VoidBackground from '../components/VoidBackground';
 import CityBackground from '../components/CityBackground';
 import JungleBackground from '../components/JungleBackground';
-import SpaceBackground2 from '../components/SpaceBackground2';
-import DiscoBackground from '../components/DiscoBackground';
 
 const MAPS = [
-  { id: 'void',    label: '◈  VIDE'    },
-  { id: 'space',   label: '🌌 ESPACE'  },
-  { id: 'space2',  label: '🌀 ESPACE 2' },
-  { id: 'city',    label: '🏙️ CITY'   },
-  { id: 'jungle',  label: '🌿 JUNGLE'  },
-  { id: 'disco',   label: '🪩 DISCO'   },
+  { id: 'void',   label: '◈  VIDE'   },
+  { id: 'space',  label: '🌌 ESPACE'  },
+  { id: 'city',   label: '🏙️ CITY'   },
+  { id: 'jungle', label: '🌿 JUNGLE'  },
 ];
 
 const { width, height } = Dimensions.get('window');
@@ -98,7 +94,7 @@ export default function HomeScreen({ navigation }) {
       <StatusBar barStyle="light-content" backgroundColor="#050214" />
 
       {/* Fond selon la map sélectionnée */}
-      {mapIndex === 1 ? <SpaceBackgroundAnimation /> : mapIndex === 2 ? <SpaceBackground2 /> : mapIndex === 3 ? <CityBackground /> : mapIndex === 4 ? <JungleBackground /> : mapIndex === 5 ? <DiscoBackground /> : <VoidBackground />}
+      {mapIndex === 1 ? <SpaceBackgroundAnimation /> : mapIndex === 2 ? <CityBackground /> : mapIndex === 3 ? <JungleBackground /> : <VoidBackground />}
 
       {/* UI par-dessus */}
       <View style={styles.uiContainer}>

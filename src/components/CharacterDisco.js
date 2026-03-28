@@ -49,24 +49,29 @@ function lightenHex(hex, f = 1.4) {
   return '#' + [r, g, b].map(v => Math.min(255, Math.floor(v * f)).toString(16).padStart(2, '0')).join('');
 }
 
+// Génère 10 tenues complètes (une par stade d'évolution)
 export function generateDiscoPlan() {
-  const pieces = [...shuffleArray([0, 1, 2, 3, 4, 5, 6]), ...shuffleArray([0, 1, 2])];
-  return pieces.map((piece, i) => ({ piece, color: NEON_PALETTE[(i * 3 + 5) % NEON_PALETTE.length] }));
+  return Array.from({ length: 10 }, () => {
+    const colors = shuffleArray([...NEON_PALETTE]);
+    return {
+      suit: colors[0], hat: colors[1], boot: colors[2],
+      shirt: colors[3], belt: colors[4], mic: colors[5],
+    };
+  });
 }
 
 export function buildDiscoColors(evolutionStage, plan) {
-  const c = { ...BASE_DISCO };
-  for (let i = 0; i < Math.min(evolutionStage, plan.length); i++) {
-    const { piece, color } = plan[i];
-    if (piece === 0) { c.suit = color; c.suitDark = darkenHex(color); c.suitLight = lightenHex(color); }
-    if (piece === 1) { c.suit = c.suit; /* pantalon suit partagé */ }
-    if (piece === 2) { c.hat = color; c.hatBrim = lightenHex(color, 1.2); c.hatAccent = lightenHex(color, 1.8); }
-    if (piece === 3) { c.boot = darkenHex(color, 0.6); c.bootSole = darkenHex(color, 0.35); }
-    if (piece === 4) { c.shirt = color; }
-    if (piece === 5) { c.belt = darkenHex(color, 0.5); c.buckle = lightenHex(color, 1.6); }
-    if (piece === 6) { c.mic = color; }
-  }
-  return c;
+  if (evolutionStage === 0 || !plan[evolutionStage - 1]) return { ...BASE_DISCO };
+  const s = plan[evolutionStage - 1];
+  return {
+    ...BASE_DISCO,
+    suit: s.suit, suitDark: darkenHex(s.suit), suitLight: lightenHex(s.suit),
+    hat: s.hat, hatBrim: lightenHex(s.hat, 1.2), hatAccent: lightenHex(s.hat, 1.8),
+    boot: darkenHex(s.boot, 0.6), bootSole: darkenHex(s.boot, 0.35),
+    shirt: s.shirt,
+    belt: darkenHex(s.belt, 0.5), buckle: lightenHex(s.belt, 1.6),
+    mic: s.mic,
+  };
 }
 
 // ─── Note musicale flottante ──────────────────────────────────────────────────

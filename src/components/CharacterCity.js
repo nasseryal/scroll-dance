@@ -56,30 +56,30 @@ function lightenHex(hex, amt = 40) {
 }
 
 // Pièces : 0=jacket, 1=pants, 2=shoes, 3=hair, 4=shirt, 5=belt, 6=badge/trim
+// Génère 10 tenues complètes (une par stade d'évolution)
 export function generateCityPlan() {
-  const pieces = shuffleArray([0, 1, 2, 3, 4, 5, 6]);
-  const extra  = shuffleArray([0, 1, 2, 3, 4, 5, 6]);
-  const full   = [...pieces, extra[0], extra[1], extra[2]];
-  return full.map((piece, idx) => ({
-    piece,
-    color: NEON_PALETTE[(idx * 3 + 7) % NEON_PALETTE.length],
-  }));
+  return Array.from({ length: 10 }, () => {
+    const colors = shuffleArray([...NEON_PALETTE]);
+    return {
+      jacket: colors[0], pants: colors[1], shoes: colors[2],
+      hair: colors[3], shirt: colors[4], belt: colors[5], badge: colors[6],
+    };
+  });
 }
 
 export function buildCityColors(evolutionStage, plan) {
-  const c = { ...BASE_CITY };
-  const count = Math.min(evolutionStage, plan.length);
-  for (let i = 0; i < count; i++) {
-    const { piece, color } = plan[i];
-    if (piece === 0) { c.jacket = color; c.jacketDark = darkenHex(color, 50); c.jacketTrim = lightenHex(color, 60); }
-    if (piece === 1) { c.pants = color; c.pantsDark = darkenHex(color, 40); }
-    if (piece === 2) { c.shoes = color; c.shoesSole = lightenHex(color, 30); }
-    if (piece === 3) { c.hair = color; c.hairLight = lightenHex(color, 40); }
-    if (piece === 4) { c.shirt = color; }
-    if (piece === 5) { c.belt = color; c.buckle = lightenHex(color, 50); }
-    if (piece === 6) { c.badge = color; }
-  }
-  return c;
+  if (evolutionStage === 0 || !plan[evolutionStage - 1]) return { ...BASE_CITY };
+  const s = plan[evolutionStage - 1];
+  return {
+    ...BASE_CITY,
+    jacket: s.jacket, jacketDark: darkenHex(s.jacket, 50), jacketTrim: lightenHex(s.jacket, 60),
+    pants: s.pants, pantsDark: darkenHex(s.pants, 40),
+    shoes: s.shoes, shoesSole: lightenHex(s.shoes, 30),
+    hair: s.hair, hairLight: lightenHex(s.hair, 40),
+    shirt: s.shirt,
+    belt: s.belt, buckle: lightenHex(s.belt, 50),
+    badge: s.badge,
+  };
 }
 
 // ── SVG ───────────────────────────────────────────────────────────────────────

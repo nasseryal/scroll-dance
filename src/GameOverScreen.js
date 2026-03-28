@@ -174,12 +174,10 @@ function CyberpunkGrid() {
 
 // ─── Main ────────────────────────────────────────────────────────────────────
 const MAPS = [
-  { id: 'void',   label: '◈  VIDE'    },
+  { id: 'void',   label: '◈  VIDE'   },
   { id: 'space',  label: '🌌 ESPACE'  },
-  { id: 'space2', label: '🌀 ESPACE 2' },
   { id: 'city',   label: '🏙️ CITY'   },
   { id: 'jungle', label: '🌿 JUNGLE'  },
-  { id: 'disco',  label: '🪩 DISCO'   },
 ];
 
 export default function GameOverScreen({ navigation, route }) {

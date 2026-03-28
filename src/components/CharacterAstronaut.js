@@ -46,28 +46,30 @@ function lightenHex(hex, f = 1.38) {
   return '#' + [r, g, b].map(v => Math.min(255, Math.floor(v * f)).toString(16).padStart(2, '0')).join('');
 }
 
+// Génère 10 tenues complètes (une par stade d'évolution)
 function generateAstroPlan() {
-  const colors = shuffleArray([...NEON_PALETTE]);
-  const pieces = [
-    ...shuffleArray([0, 1, 2, 3, 4, 5, 6]),
-    ...shuffleArray([0, 1, 2]),
-  ];
-  return colors.map((color, i) => ({ piece: pieces[i], color }));
+  return Array.from({ length: 10 }, () => {
+    const colors = shuffleArray([...NEON_PALETTE]);
+    return {
+      suit: colors[0], visor: colors[1], glove: colors[2],
+      boot: colors[3], accent: colors[4], panel: colors[5], ring: colors[6],
+    };
+  });
 }
 
 function buildAstroColors(evolutionStage, plan) {
-  const c = { ...BASE_ASTRO };
-  for (let i = 0; i < Math.min(evolutionStage, plan.length); i++) {
-    const { piece, color } = plan[i];
-    if (piece === 0) { c.suit = color; c.suitDark = darkenHex(color); c.suitLight = lightenHex(color); }
-    else if (piece === 1) { c.visor = color; }
-    else if (piece === 2) { c.glove = color; }
-    else if (piece === 3) { c.boot = darkenHex(color, 0.65); }
-    else if (piece === 4) { c.accent = color; }
-    else if (piece === 5) { c.panel = darkenHex(color, 0.38); }
-    else if (piece === 6) { c.ring = color; }
-  }
-  return c;
+  if (evolutionStage === 0 || !plan[evolutionStage - 1]) return { ...BASE_ASTRO };
+  const s = plan[evolutionStage - 1];
+  return {
+    ...BASE_ASTRO,
+    suit: s.suit, suitDark: darkenHex(s.suit), suitLight: lightenHex(s.suit),
+    visor: s.visor,
+    glove: s.glove,
+    boot: darkenHex(s.boot, 0.65),
+    accent: s.accent,
+    panel: darkenHex(s.panel, 0.38),
+    ring: s.ring,
+  };
 }
 
 // ─── Note musicale ────────────────────────────────────────────────────────────

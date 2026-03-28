@@ -35,28 +35,18 @@ function darkenHex(hex, f = 0.52) {
   return '#' + [r, g, b].map(v => Math.floor(v * f).toString(16).padStart(2, '0')).join('');
 }
 
-// Génère un plan de mutation une fois au montage
+// Génère 10 tenues complètes (une par stade d'évolution)
 function generateDevPlan() {
-  const colors = shuffleArray([...NEON_PALETTE]);
-  // 10 étapes : pièces 0-3 mélangées × 2 + 2 extras
-  const pieces = [
-    ...shuffleArray([0, 1, 2, 3]),
-    ...shuffleArray([0, 1, 2, 3]),
-    ...shuffleArray([0, 3]),
-  ];
-  return colors.map((color, i) => ({ piece: pieces[i], color }));
+  return Array.from({ length: 10 }, () => {
+    const colors = shuffleArray([...NEON_PALETTE]);
+    return { body: colors[0], legs: colors[1], shoes: colors[2], star: colors[3] };
+  });
 }
 
 function buildColors(evolutionStage, plan) {
-  const c = { ...BASE_COLORS };
-  for (let i = 0; i < Math.min(evolutionStage, plan.length); i++) {
-    const { piece, color } = plan[i];
-    if (piece === 0) { c.body1 = color; c.body2 = darkenHex(color); }
-    else if (piece === 1) { c.legs = color; }
-    else if (piece === 2) { c.shoes = color; }
-    else if (piece === 3) { c.star = color; }
-  }
-  return c;
+  if (evolutionStage === 0 || !plan[evolutionStage - 1]) return { ...BASE_COLORS };
+  const s = plan[evolutionStage - 1];
+  return { body1: s.body, body2: darkenHex(s.body), legs: s.legs, shoes: s.shoes, star: s.star };
 }
 
 // ─── Note musicale flottante ──────────────────────────────────────────────────
