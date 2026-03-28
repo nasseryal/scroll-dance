@@ -40,17 +40,17 @@ export const COUNTRY_NAMES = {
 export async function savePlayerScore(score, country, name = 'YOU') {
   if (!score || score <= 0) return;
   try {
-    const raw = await AsyncStorage.getItem('highScore');
+    const raw = await AsyncStorage.getItem('leaderboardEntry');
     const current = raw ? JSON.parse(raw) : null;
     if (!current || score > current.score) {
-      await AsyncStorage.setItem('highScore', JSON.stringify({ score, country, name }));
+      await AsyncStorage.setItem('leaderboardEntry', JSON.stringify({ score, country, name }));
     }
   } catch {}
 }
 
 export async function getLeaderboard(playerCountry) {
   try {
-    const raw = await AsyncStorage.getItem('highScore');
+    const raw = await AsyncStorage.getItem('leaderboardEntry');
     if (!raw) return [];
     const best = JSON.parse(raw);
     if (!best || best.score <= 0) return [];
